@@ -1,0 +1,38 @@
+.SUFFIXES: .f90 .mod
+
+#EXE =runiquelbl
+BIN = ${GRASP}/bin
+GRASPLIB = ${GRASP}/lib
+SRCLIBDIR = ../lib
+LAPACK90_DIR = $(GRASPLIB)
+MODDIR = ${SRCLIBDIR}/libcommons
+MODL9290 = ${SRCLIBDIR}/lib9290
+F90 = $(FC)
+F90_FLAGS = $(FC_FLAGS)
+GRASPLIBS =-l9290 -lcommons90
+LAPACK90_LIB = -llapack90
+
+APP_LIBS = -L${GRASPLIB} ${GRASPLIBS}
+
+UTIL = uniquelbl
+
+install : EXE
+
+EXE : $(BIN)/runiquelbl 
+
+OBJ : uniquelbl.o 
+
+
+
+$(BIN)/runiquelbl : uniquelbl.o 
+	$(F90) -o $(BIN)/runiquelbl $(F90_FLAGS) uniquelbl.o $(APP_LIBS) \
+	-L ${LAPACK90_DIR} ${LAPACK90_LIB} $(APP_LIBS) 
+
+.f90.o:
+	$(F90) -c $(F90_FLAGS) $< -I $(MODDIR) -I ${MODL9290} -I $(MODDIR) -o $@
+
+.f.o:
+	$(FC) -c $(FC_FLAGS) $< -o $@
+
+clean:
+	-rm -f *.o core  *.mod
