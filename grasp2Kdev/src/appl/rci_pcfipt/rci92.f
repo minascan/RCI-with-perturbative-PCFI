@@ -38,6 +38,9 @@
 *                                                                      *
 ************************************************************************
 *
+!ASIMINA 
+      USE PCFI_PT_MOD      
+      
       IMPLICIT REAL*8          (A-H, O-Z)
 
 ! cpath uses
@@ -95,9 +98,9 @@ CGG      PARAMETER (nblk0 = 20)
       INTEGER  nYMDUHMSM(8)
                !Year Month Day Universal Hour Minute Sesond Millisecond
 
-		CHARACTER str*8, msg*128
+      CHARACTER str*8, msg*128
 !-----------------------------------------------------------------------
-
+                
       imcdf = 26	! Unit for rci.res file
       IPRERUN = 0
       myid = 0
@@ -113,8 +116,6 @@ CGG      PARAMETER (nblk0 = 20)
       write(*,*)
 
       CALL starttime (ncount1, 'RSCF2')
-
-
 
 !
 ! Start timing
@@ -159,25 +160,78 @@ C         print *, 'isofile = ', isofile(1:LEN_TRIM (isofile))
 C         print *, 'name = ', name(1:LEN_TRIM (name))
 
 
-         WRITE (istde,'(A)',ADVANCE='NO') ' Full interaction? '
-         YES = GETYN ()
-         IF (YES) THEN
-            NDEF = 0
-            write(734,'(A)') 'y            ! Full interaction'
-         ELSE
+!ASIMINA ----------------------------------------------------------------
+!For implementing the pertubative PCFI: always NOT FULL interaction
+         
+!         WRITE (istde,'(A)',ADVANCE='NO') ' Full interaction? '
+!         YES = GETYN ()
+!         IF (YES) THEN
+!            NDEF = 0
+!            write(734,'(A)') 'y            ! Full interaction'
+!         ELSE
+            !ASIMINA 
             NDEF = 1
-            write(734,'(A)') 'n            ! Full interaction'
-         ENDIF
+!            write(734,'(A)') 'n            ! Full interaction'
+!         ENDIF
 
+!ASIMINA----------------------------------------------------------------
+! Get name of the state of the first subblock (used in files <name>.w)
+! That is PCFINAME(i), where i is the number of PCFIs.            
+! Reading the number of pcfi's, the pcfi file names and the number of
+! CSFs in each pcfi file.
+         
+!            WRITE (istde,'(A)') ' How many PCFI files? '
+!            READ (*,*) NPCFI            
+!            ALLOCATE(PCFINAME(NPCFI))
+!            ALLOCATE(NCSFPCFI(NPCFI))
+            
+!            IF (NPCFI < 0) THEN
+!               WRITE (istde,*) 'Number of PCFI cannot be negative. &
+!    :                         redo...'
+!              EXIT
+!            ELSEIF (NPCFI >= 0) THEN
+!               DO i = 1, NPCFI
+!                 DO
+!                     WRITE(istde,'(A,I3)') ' Give name of PCFI ', i
+!                     READ (*,*) PCFINAME(i)
+!                    L = INDEX (PCFINAME,' ')
+!                    IF (L .GT. 1) EXIT
+!                    WRITE (istde,*) 'Name may not start with a blank. &
+!    :                               redo...'
+!                 ENDDO
+!                 WRITE(istde,'(A,I3)') ' Give the number of CSFs of the
+!    :                                  PCFI file ',i
+!                 READ (*,*) NCSFPCFI(i)
+!               ENDDO
+!            ENDIF                     
+!--------------------------------------------------------------------------
+!ASIMINA-------------------------------------------------------------------
+! Now I want to use the newly constructed PCFIPTINP subrout and I only need
+! to get the name of the output file from the running of the rpcfcollect 
 
-   99 CONTINUE
-!
-! Check compatibility of plant substitutions. 
-!
-C      PRINT *, 'Calling CHKPLT...'
+            DO
+               WRITE (istde,'(A)',ADVANCE='NO') ' Name of the file that 
+     :contains zero & first order CSFs: '
+               READ (*,'(A)') COLLECTOUT
+               K = INDEX (NAME,' ')
+               IF (K .GT. 1) EXIT
+               WRITE (istde,*) 'Name may not start with a blank. redo..'
+            ENDDO
+
+!ASIMINA ''COLLECTOUT'' answer needs to be added to the .log file            
+!------------------------------------------------------------------------
+!ASIMINA
+            WRITE(*,*) ' Iccut input follows '
+            CALL PCFIPTINP
+!-----------------------------------------------------------------------   
+ 99   CONTINUE 
+!     
+!     Check compatibility of plant substitutions. 
+!     
+C     PRINT *, 'Calling CHKPLT...'
       CALL CHKPLT ('RCI92')
-
-!
+      
+!     
 ! In SETDBG of this version all control logicals are set to 
 ! false thus no debug output will be made
 !
@@ -200,19 +254,23 @@ C      PRINT *, 'Calling SETSUM...'
       CALL SETSUM (NAME)
 
 C      PRINT *, 'Calling setcsl...'
-      CALL setcsl (name(1:lenname) // '.c', ncore, nblk0, idblk)
+      CALL SETCSL (name(1:lenname) // '.c', ncore, nblk0, idblk)
 !
-! Set up the  .res  file; determine if this is a restart.
+!         Set up the  .res  file; determine if this is a restart.
+!ASIMINA  .res file contains the computed matrix elements   - binary file  
 !
 C      PRINT *, 'Calling SETRES...'
       CALL SETRES (isofile, name(1:lenname) // '.w', idblk)
 *
-*   Open the  .mix  file; determine the eigenpairs required
+*         Open the  .mix  file; determine the eigenpairs required
+!ASIMINA  .mix file contains the mixing coefficients and energy eigenvalues
+!ASIMINA  binary file / rlevels
 *
 C      PRINT *, 'Calling SETMIX...'
       CALL SETMIX (NAME, idblk)
 *
-*   Append a summary of the inputs to the  .sum  file
+*        Append a summary of the inputs to the  .sum  file
+!ASIMINA Before the calculations basic information is now written out in the summary file      
 *
       PRINT *, 'Calling STRSUM...'
       CALL STRSUM
@@ -221,11 +279,23 @@ C      PRINT *, 'Calling SETMIX...'
 *
       PRINT *, 'Calling FACTT...'
       CALL FACTT
-*
+      
+!--------------------------------------------------------------------------      
+!--------------------------------------------------------------------------
+!ASIMINA for the PCFI-PT method the computation of the one- and two-electron
+!     integrals is moved to the setham subroutine.
+!---------------------------------------------------------------------------      
+!ASIMINA Calculate all the needed one-electron Iab integrals      
+!
+!      PRINT *, 'Calling GENINTIAB...'
+!      CALL GENINTIAB (myid, nprocs, ndum)     
+*     
 *   Calculate all the needed Rk integrals 
 *
-      PRINT *, 'Calling GENINTRK...'
-      CALL GENINTRK (myid, nprocs, ndum, j2max)
+!      PRINT *, 'Calling GENINTRK...'
+!      CALL GENINTRK (myid, nprocs, ndum, j2max)
+!---------------------------------------------------------------------------
+!---------------------------------------------------------------------------   
 *
 *   If transverse interaction comput Breit integrals of type 1 and 2
 *

@@ -354,17 +354,19 @@ c zou       CALL ENGOUT (EAV+elsto,ETOT,IiATJPO,iIASPAR,IVEC,NVEC,MODE)
       CALL dalloc (piccutblk)
       CALL dalloc (pccmin)	! allocated in items as pnccmin
 
-      CALL dalloc (PCTEVLRK)	! allocated in genintrk
-      CALL dalloc (PCTEILRK)	! allocated in genintrk
+!ASIMINA-----------------------------------------------------------------
+!      CALL dalloc (PCTEVLRK)	! allocated in genintrk
+!      CALL dalloc (PCTEILRK)	! allocated in genintrk
 *
 *   Deallocate storage for the integral lists from the
 *   Dirac-Coulomb operator; the storage was allocated
 *   in IABINT and RKINTC
 *
-      IF (NCOEI .GT. 0) THEN
-         CALL DALLOC (PCOEIL)
-         CALL DALLOC (PCOEVL)
-      ENDIF
+!      IF (NCOEI .GT. 0) THEN
+!         CALL DALLOC (PCOEIL)
+!         CALL DALLOC (PCOEVL)
+!      ENDIF
+!------------------------------------------------------------------------
 *
 *   Deallocate storage for the integral lists from the
 *   transverse photon interaction operator; this storage
@@ -423,8 +425,13 @@ c zou       CALL ENGOUT (EAV+elsto,ETOT,IiATJPO,iIASPAR,IVEC,NVEC,MODE)
          ENDIF
       ENDIF
 
-      CALL dalloc (PNTRPF)	! lodrwf or lodres
-      CALL dalloc (PNTRQF)	! lodrwf or lodres
+! ASIMINA --------------------------------------------------------
+! Move this to the SETHAM subroutine -----------------------------
+      
+!     CALL dalloc (PNTRPF)	! lodrwf or lodres
+!     CALL dalloc (PNTRQF)	! lodrwf or lodres
+
+!-----------------------------------------------------------------      
 
       RETURN
 

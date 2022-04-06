@@ -67,7 +67,9 @@ CGG      PARAMETER (NNNW = 120)
 ************************************************************************
 
       FRSTCO = .TRUE.
-      NCOEI = 0
+      
+!ASIMINA not used after introducing genintiab and iabintc subroutines      
+!      NCOEI = 0
 
       IF (LTRANS) THEN
 *        ...Check the maximum numbers of orbtitals allowed in brint.f

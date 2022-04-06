@@ -9,7 +9,7 @@
 *   For this purpose a new common /setham_to_genmat2/ is created
 *                                                                      *
 *   Call(s) to: [LIB92]: ALCBUF, CONVRT, DALLOC, ICHOP, RKCO, TNSRJJ.  *
-*               [RCI92]: BRINT, IABINT, KEINT, RKINTC, VINT, VPINT.    *
+*               [RCI92]: BRINT, IABINTC, KEINT, RKINTC, VINT, VPINT.   *
 *                                                                      *
 *   Written by Farid A Parpia             Last revision: 30 Oct 1992   *
 *   Block version by Xinghong He          Last revision: 15 Jun 1998   *
@@ -17,6 +17,9 @@
 *                                                                      *
 ************************************************************************
 *
+!ASIMINA 
+      USE PCFI_PT_MOD
+      
       IMPLICIT REAL*8          (A-H, O-Z)
 
       integer*8 nelmnt,nelmntt,nelmnttmp
@@ -194,10 +197,70 @@ CGG      PARAMETER (KEYORB = 121)
          NCORE = 0
       ENDIF
 
+!-------------------------------------------------------------------------
+!ASIMINA------------------------------------------------------------------
+! Load the radial wavefunctions for the zero-order space and the first PCF
+      PRINT *, 'Calling SETRWFA...'
+      CALL SETRWFA (trim(PCFINAME(1))//'.w')
+      
+!ASIMINA------------------------------------------------------------------ 
+! Calculate all the needed, respective to the wavefunctions, Iab integrals 
+      PRINT *, 'Calling GENINTIAB...'
+      CALL GENINTIAB (myid, nprocs, ndum)
+*     
+*   Calculate all the needed Rk integrals 
+      PRINT *, 'Calling GENINTRK...'
+      CALL GENINTRK (myid, nprocs, ndum, j2max)
+      
+!!!ASIMINA counter initialization
+      ip = 2
+      
+!ASIMINA  Constructing the upper triangle of the Hamiltonian matrix - 
+!     due to symmetry the lower triangle will be the same
+!------------------------------------------------------------------------
 ! Loop over rows of the Hamiltonian matrix - distributed
-
+!------------------------------------------------------------------------
+      icstrt = 1                        
       DO 10 ic = icstrt, ncf, nprocs
+!ASIMINA-----------------------------------------------------------------
+!------------------------------------------------------------------------ 
+! IF LOOP for reading wavefunctions that correspond to first-order spaces 
+         if (ic .EQ. ICCUTBLK2(jblock,ip)) then
 
+            CALL dalloc (PNTRPF) ! lodrwf or lodres
+            CALL dalloc (PNTRQF) ! lodrwf or lodres
+            
+            CALL DALLOC (PCTEVLRK) ! allocated in genintrk
+            CALL DALLOC (PCTEILRK) ! allocated in genintrk
+*     
+*   Deallocate storage for the integral lists from the
+*   Dirac-Coulomb operator; the storage was allocated
+*   in IABINT (and RKINTC?) Now we have IABINTC though and 
+*   the integrals are actually allocated in the GENINTIAB
+*
+            IF (NCOEI .GT. 0) THEN     !ASIMINA is the if needed here ?
+               CALL DALLOC (PCOEIL)
+               CALL DALLOC (PCOEVL)
+            ENDIF 
+!ASIMINA     
+*     Load the radial wavefunctions for the 'ip' PCF
+            PRINT *, 'Calling SETRWFA...'
+            CALL SETRWFA (trim(PCFINAME(ip))//'.w')
+*     
+*   Calculate all the needed Iab integrals   
+            PRINT *, 'Calling GENINTIAB...'
+            CALL GENINTIAB (myid, nprocs, ndum)
+*     
+*   Calculate all the needed Rk integrals 
+            PRINT *, 'Calling GENINTRK...'
+            CALL GENINTRK (myid, nprocs, ndum, j2max)
+
+!ASIMINA
+! counter ip for indicating the first-order space index            
+            ip = ip + 1
+         end if         
+!------------------------------------------------------------------------
+         
          NELC = 0    ! counter - Number of non-zeros of this row
 
 !         IF (LFORDR .AND. (IC .GT. ICCUT)) THEN
@@ -212,17 +275,21 @@ CGG      PARAMETER (KEYORB = 121)
          DO 85 IR = irstart, IC
 
 ! PER
-            IF (LFORDR .AND. (IR .GT. ICCUT)) THEN
+! ASIMINA lfordr is always true for perturbative approach
+            IF (LFORDR .AND. (IR .GT. ICCUTBLK2(jblock,1))) THEN
+!ASIMINA------All CSFs beyond iccut(1) are treated perturbatively---
+!-------------------------------------------------------------------
                IF (IR.NE.IC) CYCLE
             END IF             
 ! PER
-
             ELEMNT = 0.D0     ! accumulates various contributions to H 
-
+!ASIMINA
+!            write(*,*) 'ic ', ic, 'ir ', IR
 *
 *   Generate the integral list for the matrix element of the
 *   one-body operators
 *
+!ASIMINA   NOT USED ANYMORE
             IF (IPRERUN .EQ. 1) THEN
                INC1 = 0
                INC2 = 0
@@ -234,7 +301,7 @@ CGG      PARAMETER (KEYORB = 121)
             IF (IPRERUN .EQ. 2) THEN
 *
 *   Diagonal elements are always included
-*   Off diagonal elements are included only if the
+*   Off diagonal elements are included only if the       !! ?? ASIMINA 
 *   products of the weights from the prerun are larger
 *   than the cutoff.
 *
@@ -254,31 +321,49 @@ CGG      PARAMETER (KEYORB = 121)
             ENDIF
 
 !            ...INC1.EQ.1 ------------>
-         IF (INC1 .EQ. 1) THEN   !inc1 is always 1 without PRE-RUN
-           CALL ONESCALAR(IC,IR,IA,IB,TSHELL)
+            IF (INC1 .EQ. 1) THEN !inc1 is always 1 without PRE-RUN
+
+
+!ASIMINA finds column and row and gives a and b orbitals and the
+! angular coefficient
+           CALL ONESCALAR(IC,IR, IA,IB,TSHELL)
 *
 *   Accumulate the contribution from the one-body operators:
 *   kinetic energy, electron-nucleus interaction; update the
-*   angular integral counter
+*     angular integral counter
 *
+!ASIMINA print the ncoei value for checking
+!           WRITE(*,*) 'NCOEI ', NCOEI
+! ASIMINA example of ncoei value for validating IABINTC subroutine
+! For my BeI example : NCOEI = 5
+           
          IF (IA .NE. 0) THEN
             IF (IA .EQ. IB) THEN
                DO IA = 1,NW
+                  !ASIMINA TCOEFF:angular part
                   TCOEFF = DBLE(TSHELL(IA))
                   IF (DABS (TCOEFF) .GT. CUTOFF) THEN
                      NCOEC = NCOEC + 1
-                     CALL IABINT (IA, IA, TEGRAL)
+             !ASIMINA kinetic energy plus nuclear potential contribution
+                     CALL IABINTC (IA, IA, TEGRAL)
                         !------------------------
                      ELEMNT = ELEMNT + TEGRAL*TCOEFF
+                     !ASIMINA print values 
+                     write(*,*) 'ic ', ic, 'ir ', ir, 'IA ', IA,
+     :                    'IB ',IB, 'TCOEFF ', TCOEFF, 'TEGRAL ',TEGRAL,
+     :                    'ELEMENT ', ELEMNT
                      IF (LNMS) THEN
                         CALL KEINT (IA,IA,TEGRAL)
                         !------------------------
                         ELEMNT = ELEMNT + TEGRAL*ATWINV*TCOEFF
                      ENDIF
                      IF (LVP) THEN
+                        !ASIMINA vacuum polarization
                         CALL VPINT (IA, IA, TEGRAL)
                         !------------------------
                         ELEMNT = ELEMNT + TEGRAL*TCOEFF
+                        !ASIMINA print matrix elements again
+                        WRITE(*,*) 'ELEMENT ', ELEMNT
                      ENDIF
                   ENDIF
                ENDDO
@@ -286,9 +371,13 @@ CGG      PARAMETER (KEYORB = 121)
                TCOEFF = DBLE(TSHELL(1))
                IF (DABS (TCOEFF) .GT. CUTOFF) THEN
                   NCOEC = NCOEC + 1
-                  CALL IABINT (IA, IB, TEGRAL)
-                        !------------------------
+                  CALL IABINTC (IA, IB, TEGRAL)
+                        !-----------------------
                   ELEMNT = ELEMNT + TEGRAL*TCOEFF
+                  !ASIMINA print values
+ !                 write(*,*) 'ic ', ic, 'ir ', ir, 'IA ', IA
+ !    :                 'IB ', IB, 'TCOEFF ', TCOEFF, 'TEGRAL ', TEGRAL
+ !                 write(*,*) 'IB ', IB
                   IF (LNMS) THEN
                      CALL KEINT (IA, IB, TEGRAL)
                         !------------------------
@@ -331,6 +420,9 @@ CGG      PARAMETER (KEYORB = 121)
                ELEMNT = ELEMNT + TEGRAL*VCOEFF
             ENDIF
     7    CONTINUE
+
+!ASIMINA
+         write(*,*) 'ic ', ic, 'ir ', ir, 'ELEMNT ', ELEMNT
 *
          IBUG1 = 0
 
@@ -457,7 +549,13 @@ CFF      IF (MOD (IC, 20) .EQ. 0 .OR.
 *   Update the counter for the total number of elements
 *
          NELMNT = NELMNT + NELC
-*
+
+!ASIMINA-----------------------------------------------------------------
+         
+
+!-------------------------------------------------------------------------
+         
+*     
    10 CONTINUE
 ************************************************************************
 *

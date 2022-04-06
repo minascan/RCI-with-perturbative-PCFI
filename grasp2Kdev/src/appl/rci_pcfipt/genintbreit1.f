@@ -66,7 +66,7 @@ CGG      PARAMETER (NNNW = 120)
       ENDIF
 *
 *   Make the breit integrals. Note that there are no symmetry relations that
-*   can be utilized. See paper by Grant.
+*   can be utilized. See paper by Grasnt.
 *   When GEN is false, sweep through to find dimension
 *
       GEN = .FALSE.

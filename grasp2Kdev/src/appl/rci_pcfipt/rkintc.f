@@ -28,8 +28,6 @@ C      PARAMETER (KEY = 121)
 *   Ensure that the indices are in `canonical' order
 *   Compute the composite (packed) index
 *
-
-
       IF (IA.GT.IC) THEN
         ISWAP = IC
         IC = IA

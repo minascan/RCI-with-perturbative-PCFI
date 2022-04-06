@@ -1,4 +1,6 @@
-EXE = rci
+.SUFFIXES: .f90 .mod
+
+EXE = rci_pcfipt
 BINDIR = ${GRASP}/bin
 GRASPLIB = ${GRASP}/lib
 GRASPBLOCKD = ${GRASPLIB}/graspBD.o
@@ -7,7 +9,7 @@ BINFILE = $(BINDIR)/$(EXE)
 APP_LIBS = ${GRASPBLOCKD} -L${GRASPLIB} ${NEWGRASPLIBS} 
 
 APP_OBJ= \
-        auxblk.o bessel.o breid.o brint1.o brint2.o brint3.o brint4.o \
+        pcfi_pt_mod.o auxblk.o bessel.o breid.o brint1.o brint2.o brint3.o brint4.o \
         brint5.o brint6.o brintf.o brra.o cxk.o engout.o evcout.o funk.o \
         funl.o fzalf.o genintrk.o genmat.o hmout.o hovlap.o iabint.o indtpi.o \
         keint.o klamaq.o mohr.o ncharg.o qed.o rkint.o rkintc.o setdbg.o \
@@ -16,7 +18,8 @@ APP_OBJ= \
         dnicmv.o genmat2.o getcid.o iniestdm.o iniestsd.o lodmix.o lodres.o \
         maneig.o matrix.o rci92.o  setcsl.o setham_gg.o setmix.o setres.o \
         spodmv.o strsum.o shield.o qed_slfen.o lodstatetune.o genintbreit1.o \
-        genintbreit2.o triangbreit1.o triangbreit2.o
+        genintbreit2.o triangbreit1.o triangbreit2.o genintiab.o \
+	iabintc.o pcfiptinp.o
 
 
 $(EXE): $(APP_OBJ)

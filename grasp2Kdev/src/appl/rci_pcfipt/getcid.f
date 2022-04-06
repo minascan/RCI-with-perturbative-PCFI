@@ -13,6 +13,9 @@
 *                                                                      *
 ************************************************************************
 *
+!ASIMINA      
+      USE PCFI_PT_MOD
+      
       IMPLICIT REAL*8          (A-H, O-Z)
       CHARACTER*(*) isofile, rwffile, idblk(*)*8
 
@@ -63,6 +66,8 @@ CGG      PARAMETER (NNNW = 120)
      :       asfenergy(100,100),lshift
 
 
+!------------------------------------------------------------------------
+      
 !
 ! Open, check, load data from, and close the  .iso  file
 ! Data loaded are: EMN,Z,/NPAR/,/NSMDAT/ where /.../ means whole 
@@ -104,38 +109,55 @@ C         LFORDR = GETYN ()
          LFORDR = .FALSE.
       ENDIF
 
-! Get iccutblk() from the user-input
+! Get ICCUTBLK2() from the user-input
 
       IF (.NOT. LFORDR) THEN
          !...Default first
          DO i = 1, nblock
-           iccutblk(i) = ncfblk(i)
+            DO j = 1, npcfi
+               ICCUTBLK2(i,j) = ncfblk(i)
+            ENDDO
          ENDDO
-      ELSE
-
-      ! Let master do the i/o, then broadcast
-            WRITE (istde,*) 'There are ', nblock, 'blocks. They are:'
-            WRITE (istde,*) '  block     J Parity     No of CSFs'
-            DO i = 1, nblock
-               WRITE (istde,*) i, idblk(i)(1:5), ncfblk(i)
-            ENDDO
-
-            WRITE (istde,*)
-            WRITE (istde,*) 'Enter iccut (larger than 1) for each block'
-            DO jblock = 1, nblock
-               WRITE (istde,*) 'Block ', jblock, '   ncf = ',
-     &                        ncfblk(jblock)
-     &                , ' id = ', idblk(jblock)(1:5)
-  123          READ (istdi,*) ntmp
-               IF (ntmp .GE. 0 .AND. ntmp .LE. ncfblk(jblock)) THEN
-                  iccutblk(jblock) = ntmp
-               ELSE
-                  WRITE (istde,*) 'ICCUT out of range, re-enter:'
-                  GOTO 123
-               ENDIF
-               write(734,*) ntmp,'! ICCUT for block',jblock
-            ENDDO
       ENDIF
+!ASIMINA -----------------------------------------------------------
+! Now that the PCFIPTINP subroutine exists I should just comment out
+! the following lines         
+!ASIMINA -----------------------------------------------------------
+!For implementing the pertubative PCFI: always NOT FULL interaction
+         
+      ! Let master do the i/o, then broadcast
+           ! WRITE (istde,*) 'There are ', nblock, 'blocks. They are:'
+           ! WRITE (istde,*) '  block     J Parity     No of CSFs'
+           ! DO i = 1, nblock
+           !    WRITE (istde,*) i, idblk(i)(1:5), ncfblk(i)
+           ! ENDDO
+
+!ASIMINA------------------------------------------------------------
+!Several iccut: (iccut(i)) with NCSFPCFI(i) values for the relative
+!PCFINAME(i) files.            
+        
+           ! WRITE (istde,*)
+           ! WRITE (istde,*) 'Enter iccut (larger than 1) for each block'
+           ! DO jblock = 1, nblock              
+           !    WRITE (istde,*) 'Block ', jblock, '   ncf = ',
+!     &                        ncfblk(jblock)
+!     &              , ' id = ', idblk(jblock)(1:5)
+               
+!               DO ip = 1, npcfi                            ! new loop
+!                  WRITE(istde,'(A,I3)') ' Give iccut ', ip !!
+! 123              READ (istdi,*) ntmp2(ip)
+!                  IF (ntmp2(ip) .GE. 0 .AND. 
+!     &                ntmp2(ip) .LE. ncfblk(jblock)) THEN
+!                     ICCUTBLK2(jblock,ip) = ntmp2(ip)
+!                  ELSE
+!                     WRITE (istde,*) 'ICCUT out of range, re-enter:'
+!                     GOTO 123
+!                  ENDIF
+!                  write(734,*) ntmp2(ip),'! ICCUT for block',jblock
+!               ENDDO                                      ! end new loop
+!               
+!            ENDDO
+!         ENDIF
 
 ******************************************************************
 !
@@ -310,9 +332,12 @@ C      ENDIF
 *
       CALL NUCPOT
 *
+!-----------------------------------------------------------------------
+!ASIMINA This is moved to the SETHAM subroutine      
 *   Load the radial wavefunctions
 *
-      CALL SETRWFA (rwffile)
+!      CALL SETRWFA (rwffile)
+!-----------------------------------------------------------------------     
 *
 *   Write the basic parameters of the model electron cloud to the
 *   .res  file; this is the second record on the file --- the
@@ -332,8 +357,10 @@ C      ENDIF
 *   iccutblk() is now an array of length nblock.
 *   This is the sixth record on the file
 *
-      WRITE (imcdf) C, LFORDR, (ICCUTblk(i), i = 1, nblock), 
-     &              LTRANS, WFACT, LVP, LNMS, LSMS
+!ASIMINA ----------------------------------------------------------------      
+      WRITE (imcdf) C, LFORDR, (ICCUTBLK2(i,j), i = 1, nblock),  ! fix j
+     &     LTRANS, WFACT, LVP, LNMS, LSMS
+!------------------------------------------------------------------------      
 *
 *   Write the grid data to the  .res  file; this is the seventh
 *   record on the file
