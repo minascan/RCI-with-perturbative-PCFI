@@ -16,9 +16,8 @@
 *   Shift diagonal elements by Per J                      March 2007   *
 *                                                                      *
 ************************************************************************
-*
-!ASIMINA 
-      USE PCFI_PT_MOD
+* 
+      USE PCFI_PT_MOD          ! ASIMINA
       
       IMPLICIT REAL*8          (A-H, O-Z)
 
@@ -74,8 +73,11 @@ CGG      PARAMETER (NNNW = 120)
       POINTER (PNTEMT,EMT(1))
       POINTER (PNIROW,IROW(1))
 *
+!----------------------------------------------------------------------------
+!ASIMINA see subroutines talk --> alcbuf      
       POINTER (PLABEL,LABEL(6,1))
       POINTER (PCOEFF,COEFF(1))
+!----------------------------------------------------------------------------
 *
       COMMON/BCORE/ICORE(NNNW)
      :      /BILST/PINDT1,PINDT2,PINDT3,PINDT4,PINDT5,PINDT6,
@@ -134,7 +136,7 @@ CGG      PARAMETER (KEYORB = 121)
      &  NCOREtmp, NVPItmp, NKEItmp, NVINTItmp, NELMNTtmp, ncftmp
 *
 !-----------------------------------------------------------------------
-      PRINT *, 'Calling setham ...'
+      PRINT *, 'Calling SETHAM ...'
 
       nelmnt = nelmntt
       
@@ -188,108 +190,160 @@ CGG      PARAMETER (KEYORB = 121)
             ICORE(I) = 1
     2    CONTINUE
 
-         !DO I = 1, 6
-         !   FIRST(I) = .TRUE.
-         !   NTPI(I)  = 0
-         !ENDDO
+* ASIMINA
+* Previously placed in the AUXBLK.F subroutine.            
+         DO I = 1, 6
+            FIRST(I) = .TRUE.
+            NTPI(I)  = 0
+         ENDDO
 
          NMCBP = 0
          NCORE = 0
       ENDIF
 
-!-------------------------------------------------------------------------
-!ASIMINA------------------------------------------------------------------
-! Load the radial wavefunctions for the zero-order space and the first PCF
+* ASIMINA 
+* Load radial wavefunctions for the zero-order space and the first PCF
       PRINT *, 'Calling SETRWFA...'
-      CALL SETRWFA (trim(PCFINAME(1))//'.w')
-      
-!ASIMINA------------------------------------------------------------------ 
-! Calculate all the needed, respective to the wavefunctions, Iab integrals 
+      CALL SETRWFA (trim(PCFINAME(1))//'.w')      
+*            
+* Calculate all the needed one-electron and Rk  integrals
+*   
       PRINT *, 'Calling GENINTIAB...'
       CALL GENINTIAB (myid, nprocs, ndum)
-*     
-*   Calculate all the needed Rk integrals 
+      
       PRINT *, 'Calling GENINTRK...'
       CALL GENINTRK (myid, nprocs, ndum, j2max)
+*
+*   If transverse interaction comput Breit integrals of type 1 and 2
+*
+      IF (LTRANS) THEN
+         PRINT *, 'Calling GENINTBREIT1...'
+         CALL GENINTBREIT1 (myid, nprocs, ndum, j2max)
+         PRINT *, 'Calling GENINTBREIT2...'
+         CALL GENINTBREIT2 (myid, nprocs, ndum, j2max)
+      END IF
       
-!!!ASIMINA counter initialization
+! ASIMINA counter initialization
       ip = 2
       
 !ASIMINA  Constructing the upper triangle of the Hamiltonian matrix - 
 !     due to symmetry the lower triangle will be the same
-!------------------------------------------------------------------------
+!--------------------------------------------------------------------------
 ! Loop over rows of the Hamiltonian matrix - distributed
-!------------------------------------------------------------------------
-      icstrt = 1                        
+!--------------------------------------------------------------------------
+      icstrt = 1                       
       DO 10 ic = icstrt, ncf, nprocs
-!ASIMINA-----------------------------------------------------------------
-!------------------------------------------------------------------------ 
-! IF LOOP for reading wavefunctions that correspond to first-order spaces 
+!ASIMINA-------------------------------------------------------------------
+!-------------------------------------------------------------------------- 
+! LOOP for reading the wavefunctions that correspond to first-order spaces
          if (ic .EQ. ICCUTBLK2(jblock,ip)) then
 
             CALL dalloc (PNTRPF) ! lodrwf or lodres
             CALL dalloc (PNTRQF) ! lodrwf or lodres
-            
-            CALL DALLOC (PCTEVLRK) ! allocated in genintrk
-            CALL DALLOC (PCTEILRK) ! allocated in genintrk
 *     
 *   Deallocate storage for the integral lists from the
 *   Dirac-Coulomb operator; the storage was allocated
-*   in IABINT (and RKINTC?) Now we have IABINTC though and 
-*   the integrals are actually allocated in the GENINTIAB
-*
-            IF (NCOEI .GT. 0) THEN     !ASIMINA is the if needed here ?
+*   in the GENINTIAB and GENINTRK subroutines 
+*            
+            IF (NCOEI .GT. 0) THEN    
                CALL DALLOC (PCOEIL)
                CALL DALLOC (PCOEVL)
-            ENDIF 
-!ASIMINA     
-*     Load the radial wavefunctions for the 'ip' PCF
+            ENDIF
+            
+            CALL DALLOC (PCTEVLRK) 
+            CALL DALLOC (PCTEILRK)             
+*
+*   Deallocate storage for the integral lists from the
+*   transverse photon interaction operator; this storage was
+*   allocated in genintbreit1, genintbreit2 and brint3,...brint6.
+*
+            IF (LTRANS) THEN
+               IF (NTPI(1) .GT. 0) THEN
+                  CALL DALLOC (PINDT1)
+                  CALL DALLOC (PVALT1)
+               ENDIF
+               IF (NTPI(2) .GT. 0) THEN
+                  CALL DALLOC (PINDT2)
+                  CALL DALLOC (PVALT2)
+               ENDIF
+               IF (NTPI(3) .GT. 0) THEN
+                  CALL DALLOC (PINDT3)
+                  CALL DALLOC (PVALT3)
+               ENDIF               
+               IF (NTPI(4) .GT. 0) THEN
+                  CALL DALLOC (PINDT4)
+                  CALL DALLOC (PVALT4)
+               ENDIF
+               IF (NTPI(5) .GT. 0) THEN
+                  CALL DALLOC (PINDT5)
+                  CALL DALLOC (PVALT5)
+               ENDIF    
+               IF (NTPI(6) .GT. 0) THEN
+                  CALL DALLOC (PINDT6)
+                  CALL DALLOC (PVALT6)
+               ENDIF  
+            ENDIF
+
+            DO I = 3, 6
+               FIRST(I) = .TRUE.
+               NTPI(I)  = 0
+            ENDDO            
+            
+* ASIMINA     
+* Load the radial wavefunctions for the 'ip' PCF
+*            
             PRINT *, 'Calling SETRWFA...'
             CALL SETRWFA (trim(PCFINAME(ip))//'.w')
-*     
-*   Calculate all the needed Iab integrals   
+*            
+* Calculate all the needed one-electron and Rk  integrals
+*            
             PRINT *, 'Calling GENINTIAB...'
             CALL GENINTIAB (myid, nprocs, ndum)
-*     
-*   Calculate all the needed Rk integrals 
+            
             PRINT *, 'Calling GENINTRK...'
             CALL GENINTRK (myid, nprocs, ndum, j2max)
-
-!ASIMINA
-! counter ip for indicating the first-order space index            
+*     
+* If transverse interaction comput Breit integrals of type 1 and 2
+*     
+            IF (LTRANS) THEN
+               PRINT *, 'Calling GENINTBREIT1...'
+               CALL GENINTBREIT1 (myid, nprocs, ndum, j2max)
+               PRINT *, 'Calling GENINTBREIT2...'
+               CALL GENINTBREIT2 (myid, nprocs, ndum, j2max)
+            END IF
+*            
+* ASIMINA
+* Counter ip for indicating the first-order space index            
             ip = ip + 1
          end if         
 !------------------------------------------------------------------------
          
-         NELC = 0    ! counter - Number of non-zeros of this row
-
-!         IF (LFORDR .AND. (IC .GT. ICCUT)) THEN
-!            irstart = IC
-!         ELSE
-!            irstart = 1
-!         ENDIF
-
-! Loop over columns of the current row
-
+         NELC = 0             ! counter - Number of non-zeros of this row
+         
+!     IF (LFORDR .AND. (IC .GT. ICCUT)) THEN
+!     irstart = IC
+!     ELSE
+!     irstart = 1
+!     ENDIF
+         
+!     Loop over columns of the current row
+         
          irstart = 1
          DO 85 IR = irstart, IC
-
-! PER
-! ASIMINA lfordr is always true for perturbative approach
-            IF (LFORDR .AND. (IR .GT. ICCUTBLK2(jblock,1))) THEN
+            
+!ASIMINA lfordr is always true for perturbative approach            
+            IF (LFORDR .AND. (IR .GT. ICCUTBLK2(jblock,1))) THEN 
 !ASIMINA------All CSFs beyond iccut(1) are treated perturbatively---
 !-------------------------------------------------------------------
                IF (IR.NE.IC) CYCLE
             END IF             
-! PER
-            ELEMNT = 0.D0     ! accumulates various contributions to H 
-!ASIMINA
-!            write(*,*) 'ic ', ic, 'ir ', IR
-*
-*   Generate the integral list for the matrix element of the
-*   one-body operators
-*
-!ASIMINA   NOT USED ANYMORE
+!     PER
+            ELEMNT = 0.D0       ! accumulates various contributions to H 
+*     
+*     Generate the integral list for the matrix element of the
+*     one-body operators
+*     
+!     ASIMINA   This is NOT USED anymore
             IF (IPRERUN .EQ. 1) THEN
                INC1 = 0
                INC2 = 0
@@ -297,14 +351,14 @@ CGG      PARAMETER (KEYORB = 121)
                   INC1 = 1
                ENDIF
             ENDIF
-
+            
             IF (IPRERUN .EQ. 2) THEN
-*
-*   Diagonal elements are always included
-*   Off diagonal elements are included only if the       !! ?? ASIMINA 
-*   products of the weights from the prerun are larger
-*   than the cutoff.
-*
+*     
+*     Diagonal elements are always included
+*     Off diagonal elements are included only if the      
+*     products of the weights from the prerun are larger
+*     than the cutoff.
+*     
                IF (IC .EQ. IR) THEN
                   INC1 = 1
                   INC2 = 1
@@ -314,261 +368,234 @@ CGG      PARAMETER (KEYORB = 121)
                ENDIF
                DO IPI = 1,NVEC
                   PRECOEFF = 
-     :             DABS(EVEC1(IC+(IPI-1)*NCF)*EVEC1(IR+(IPI-1)*NCF))
+     :                 DABS(EVEC1(IC+(IPI-1)*NCF)*EVEC1(IR+(IPI-1)*NCF))
                   IF (PRECOEFF .GT. COEFFCUT1) INC1 = 1 
                   IF (PRECOEFF .GT. COEFFCUT2) INC2 = 1 
                ENDDO
             ENDIF
 
-!            ...INC1.EQ.1 ------------>
-            IF (INC1 .EQ. 1) THEN !inc1 is always 1 without PRE-RUN
-
-
-!ASIMINA finds column and row and gives a and b orbitals and the
-! angular coefficient
-           CALL ONESCALAR(IC,IR, IA,IB,TSHELL)
-*
-*   Accumulate the contribution from the one-body operators:
-*   kinetic energy, electron-nucleus interaction; update the
+! ---------------------------------------------------------------------
+!     ASIMINA Begin to accumulate all contributions HERE
+!     ...INC1.EQ.1 ------------>
+            IF (INC1 .EQ. 1) THEN !inc1 is always 1 without PRE-RUN   
+               
+!     ASIMINA finds column and row and gives a and b orbitals and the
+!     angular coefficient
+               CALL ONESCALAR(IC,IR, IA,IB,TSHELL)
+*     
+*     Accumulate the contribution from the ONE-BODY operators:
+*     kinetic energy, electron-nucleus interaction; update the
 *     angular integral counter
-*
-!ASIMINA print the ncoei value for checking
-!           WRITE(*,*) 'NCOEI ', NCOEI
-! ASIMINA example of ncoei value for validating IABINTC subroutine
-! For my BeI example : NCOEI = 5
-           
-         IF (IA .NE. 0) THEN
-            IF (IA .EQ. IB) THEN
-               DO IA = 1,NW
-                  !ASIMINA TCOEFF:angular part
-                  TCOEFF = DBLE(TSHELL(IA))
-                  IF (DABS (TCOEFF) .GT. CUTOFF) THEN
-                     NCOEC = NCOEC + 1
-             !ASIMINA kinetic energy plus nuclear potential contribution
-                     CALL IABINTC (IA, IA, TEGRAL)
-                        !------------------------
-                     ELEMNT = ELEMNT + TEGRAL*TCOEFF
-                     !ASIMINA print values 
-                     write(*,*) 'ic ', ic, 'ir ', ir, 'IA ', IA,
-     :                    'IB ',IB, 'TCOEFF ', TCOEFF, 'TEGRAL ',TEGRAL,
-     :                    'ELEMENT ', ELEMNT
-                     IF (LNMS) THEN
-                        CALL KEINT (IA,IA,TEGRAL)
-                        !------------------------
-                        ELEMNT = ELEMNT + TEGRAL*ATWINV*TCOEFF
-                     ENDIF
-                     IF (LVP) THEN
-                        !ASIMINA vacuum polarization
-                        CALL VPINT (IA, IA, TEGRAL)
-                        !------------------------
-                        ELEMNT = ELEMNT + TEGRAL*TCOEFF
-                        !ASIMINA print matrix elements again
-                        WRITE(*,*) 'ELEMENT ', ELEMNT
-                     ENDIF
-                  ENDIF
-               ENDDO
-            ELSE
-               TCOEFF = DBLE(TSHELL(1))
-               IF (DABS (TCOEFF) .GT. CUTOFF) THEN
-                  NCOEC = NCOEC + 1
-                  CALL IABINTC (IA, IB, TEGRAL)
-                        !-----------------------
-                  ELEMNT = ELEMNT + TEGRAL*TCOEFF
-                  !ASIMINA print values
- !                 write(*,*) 'ic ', ic, 'ir ', ir, 'IA ', IA
- !    :                 'IB ', IB, 'TCOEFF ', TCOEFF, 'TEGRAL ', TEGRAL
- !                 write(*,*) 'IB ', IB
-                  IF (LNMS) THEN
-                     CALL KEINT (IA, IB, TEGRAL)
-                        !------------------------
-                     ELEMNT = ELEMNT + TEGRAL*ATWINV*TCOEFF
-                  ENDIF
-                  IF (LVP) THEN
-                     CALL VPINT (IA, IB, TEGRAL)
-                        !------------------------
-                     ELEMNT = ELEMNT + TEGRAL*TCOEFF
-                  ENDIF
-               ENDIF
-            ENDIF
-         ENDIF
-*
-         IBUG1 = 0
-*
-*   Accumulate the contributions from the two-electron
-*   Coulomb operator and the mass polarisation; the latter
-*   is computed first because the orbital indices may be
-*   permuted by RKINTC
-*
-         NVCOEF = 0
-*
-         CALL RKCO_GG (IC, IR, CORD, INCOR, 1)
-*
-         DO 7 I = 1, NVCOEF
-            VCOEFF = COEFF(I)
-            IF (DABS (VCOEFF) .GT. CUTOFF) THEN
-               NCTEC = NCTEC + 1
-               IF (LSMS) THEN
-                  IF (LABEL(5,I) .EQ. 1) THEN
-                     CALL VINT (LABEL(1,I), LABEL(3,I), TGRL1)
-                     CALL VINT (LABEL(2,I), LABEL(4,I), TGRL2)
-                     ELEMNT = ELEMNT - TGRL1*TGRL2*ATWINV*VCOEFF
-                  ENDIF
-               ENDIF
-               CALL RKINTC (LABEL(1,I), LABEL(2,I),
-     :                      LABEL(3,I), LABEL(4,I),
-     :                      LABEL(5,I), TEGRAL)
-               ELEMNT = ELEMNT + TEGRAL*VCOEFF
-            ENDIF
-    7    CONTINUE
-
-!ASIMINA
-         write(*,*) 'ic ', ic, 'ir ', ir, 'ELEMNT ', ELEMNT
-*
-         IBUG1 = 0
-
-         ENDIF  !inc1 is always 1 without PRE-RUN
-!            ...INC1.EQ.1 <------------
-************************************************************************
-!            ...LTRANS .AND. (INC2.EQ.1) ------------>
-         IF (LTRANS .AND. (INC2.EQ.1)) THEN
-            !IF (INC2 .EQ. 1) THEN  !inc2 is always 1 without PRE-RUN
-*
-*   Accumulate the contribution from the two-electron
-*   transverse interaction operator
-*
-            NVCOEF = 0
-*
-            CALL RKCO_GG (IC, IR, BREID, 1, 2)
-*
-            DO 8 I = 1, NVCOEF
-               IF (DABS (COEFF(I)) .GT. CUTOFF) THEN
-                  NMCBP = NMCBP + 1
-                  ITYPE = ABS (LABEL(6,I))
-                  IF (ITYPE .EQ. 1) THEN
-                     CALL BRINT1 (LABEL(1,I), LABEL(2,I),
-     :                            LABEL(3,I), LABEL(4,I),
-     :                            LABEL(5,I), TEGRAL)
-                  ELSEIF (ITYPE .EQ. 2) THEN
-                     CALL BRINT2 (LABEL(1,I), LABEL(2,I), 
-     :                            LABEL(3,I), LABEL(4,I),
-     :                            LABEL(5,I), TEGRAL)
-                  ELSEIF (ITYPE .EQ. 3) THEN
-                     CALL BRINT3 (LABEL(1,I), LABEL(2,I),
-     :                            LABEL(3,I), LABEL(4,I),
-     :                            LABEL(5,I), TEGRAL)
-                  ELSEIF (ITYPE .EQ. 4) THEN
-                     CALL BRINT4 (LABEL(1,I), LABEL(2,I),
-     :                            LABEL(3,I), LABEL(4,I),
-     :                            LABEL(5,I), TEGRAL)
-                  ELSEIF (ITYPE .EQ. 5) THEN
-                     CALL BRINT5 (LABEL(1,I), LABEL(2,I),
-     :                            LABEL(3,I), LABEL(4,I),
-     :                            LABEL(5,I), TEGRAL)
-                  ELSEIF (ITYPE .EQ. 6) THEN
-                     CALL BRINT6 (LABEL(1,I), LABEL(2,I),
-     :                            LABEL(3,I), LABEL(4,I),
-     :                            LABEL(5,I), TEGRAL)
-                  ENDIF 
-                  CONTR = COEFF(I)*TEGRAL
-                  IF (LABEL(6,I) .GT. 0) THEN
-                     ELEMNT = ELEMNT + CONTR
+*     
+               IF (IA .NE. 0) THEN
+                  IF (IA .EQ. IB) THEN
+                     DO IA = 1,NW
+!ASIMINA TCOEFF:angular part
+                        TCOEFF = DBLE(TSHELL(IA))
+                        IF (DABS (TCOEFF) .GT. CUTOFF) THEN
+                           NCOEC = NCOEC + 1
+!ASIMINA kinetic energy plus nuclear potential contribution
+                           CALL IABINTC (IA, IA, TEGRAL)
+                           ELEMNT = ELEMNT + TEGRAL*TCOEFF
+                           IF (LNMS) THEN
+                              CALL KEINT (IA,IA,TEGRAL)
+                              ELEMNT = ELEMNT + TEGRAL*ATWINV*TCOEFF
+                           ENDIF
+                           IF (LVP) THEN
+!ASIMINA vacuum polarization
+                              CALL VPINT (IA, IA, TEGRAL)
+                              ELEMNT = ELEMNT + TEGRAL*TCOEFF
+                           ENDIF
+                        ENDIF
+                     ENDDO
                   ELSE
-!                        ...It comes here only when ic=ir=1
-!                           clue: rkco<-breid<-talk<-label(6,i)
-                     NCORE = NCORE + 1
-                     ELSTO = ELSTO + CONTR
+                     TCOEFF = DBLE(TSHELL(1))
+                     IF (DABS (TCOEFF) .GT. CUTOFF) THEN
+                        NCOEC = NCOEC + 1
+                        CALL IABINTC (IA, IB, TEGRAL)
+                        ELEMNT = ELEMNT + TEGRAL*TCOEFF                 
+                        IF (LNMS) THEN
+                           CALL KEINT (IA, IB, TEGRAL)
+                           ELEMNT = ELEMNT + TEGRAL*ATWINV*TCOEFF
+                        ENDIF
+                        IF (LVP) THEN
+                           CALL VPINT (IA, IB, TEGRAL)
+                           ELEMNT = ELEMNT + TEGRAL*TCOEFF
+                        ENDIF
+                     ENDIF
                   ENDIF
                ENDIF
-    8       CONTINUE
-*
-            IBUG1 = 0
-* 
-!               ...ELSTO is a constant over all diagonals, thus its
-!                  contribution to the total energy can be added later
-!            IF (IR .EQ. IC) ELEMNT = ELEMNT + ELSTO
-*
-            !ENDIF   !inc2 is always 1 without PRE-RUN
-         ENDIF
-!            ...LTRANS .AND. (INC2.EQ.1) <------------
+*     
+               IBUG1 = 0
+*     
+*     Accumulate the contributions from the TWO-ELECTRON
+*     Coulomb operator and the mass polarisation; the latter
+*     is computed first because the orbital indices may be
+*     permuted by RKINTC
+*     
+               NVCOEF = 0
+*     
+               CALL RKCO_GG (IC, IR, CORD, INCOR, 1)
+*     
+               DO 7 I = 1, NVCOEF
+                  VCOEFF = COEFF(I)
+                  IF (DABS (VCOEFF) .GT. CUTOFF) THEN
+                     NCTEC = NCTEC + 1
+                     IF (LSMS) THEN
+                        IF (LABEL(5,I) .EQ. 1) THEN
+                           CALL VINT (LABEL(1,I), LABEL(3,I), TGRL1)
+                           CALL VINT (LABEL(2,I), LABEL(4,I), TGRL2)
+                           ELEMNT = ELEMNT - TGRL1*TGRL2*ATWINV*VCOEFF
+                        ENDIF
+                     ENDIF
+                     CALL RKINTC (LABEL(1,I), LABEL(2,I),
+     :                    LABEL(3,I), LABEL(4,I),
+     :                    LABEL(5,I), TEGRAL)
+                     ELEMNT = ELEMNT + TEGRAL*VCOEFF
+                  ENDIF
+ 7             CONTINUE
+               
+*     
+               IBUG1 = 0
+               
+            ENDIF               !inc1 is always 1 without PRE-RUN
+!     ...INC1.EQ.1 <------------
 ************************************************************************
-!
-! Store this element if it is diagonal or its value is greater than 
-! CUTOFF
-!
-         IF ( (IR .EQ. IC) .OR. (DABS (ELEMNT) .GT. CUTOFF) ) THEN
-            NELC       = NELC + 1
-            EMT(NELC)  = ELEMNT
-            IROW(NELC) = IR
-         ENDIF
-
-* Per for shift
-
-         IF (nshiftj(jblock).GT.0) THEN
-            DO ishift = 1,nshiftj(jblock)
-               IF ((IR .EQ. IC) .AND.
-     &            (nasfshift(jblock,ishift).EQ. IR)) THEN
-                  write(*,*)
-                  write(*,*) 'Diagonalelement shifted for',IR
-                  write(*,*) 'Energy shift in Hartree ',
-     &                        asfenergy(jblock,ishift)
-                  write(*,*) 'Energy shift in cm-1 ',
+!     ...LTRANS .AND. (INC2.EQ.1) ------------>
+            IF (LTRANS .AND. (INC2.EQ.1)) THEN
+!     IF (INC2 .EQ. 1) THEN  !inc2 is always 1 without PRE-RUN
+*     
+*     Accumulate the contribution from the two-electron
+*     transverse interaction operator
+*     
+               NVCOEF = 0
+*               
+               CALL RKCO_GG (IC, IR, BREID, 1, 2)               
+*     
+               DO 8 I = 1, NVCOEF
+                  IF (DABS (COEFF(I)) .GT. CUTOFF) THEN
+                     NMCBP = NMCBP + 1
+                     ITYPE = ABS (LABEL(6,I))
+                     IF (ITYPE .EQ. 1) THEN                 
+                        CALL BRINT1 (LABEL(1,I), LABEL(2,I),
+     :                       LABEL(3,I), LABEL(4,I),
+     :                       LABEL(5,I), TEGRAL)
+                     ELSEIF (ITYPE .EQ. 2) THEN
+                        CALL BRINT2 (LABEL(1,I), LABEL(2,I), 
+     :                       LABEL(3,I), LABEL(4,I),
+     :                       LABEL(5,I), TEGRAL)
+                     ELSEIF (ITYPE .EQ. 3) THEN
+                        CALL BRINT3 (LABEL(1,I), LABEL(2,I),
+     :                       LABEL(3,I), LABEL(4,I),
+     :                       LABEL(5,I), TEGRAL)
+                     ELSEIF (ITYPE .EQ. 4) THEN
+                        CALL BRINT4 (LABEL(1,I), LABEL(2,I),
+     :                       LABEL(3,I), LABEL(4,I),
+     :                       LABEL(5,I), TEGRAL)
+                     ELSEIF (ITYPE .EQ. 5) THEN
+                        CALL BRINT5 (LABEL(1,I), LABEL(2,I),
+     :                       LABEL(3,I), LABEL(4,I),
+     :                       LABEL(5,I), TEGRAL)
+                     ELSEIF (ITYPE .EQ. 6) THEN                       
+                        CALL BRINT6 (LABEL(1,I), LABEL(2,I),
+     :                       LABEL(3,I), LABEL(4,I),
+     :                       LABEL(5,I), TEGRAL)
+                     ENDIF 
+                     CONTR = COEFF(I)*TEGRAL
+                     IF (LABEL(6,I) .GT. 0) THEN
+                        ELEMNT = ELEMNT + CONTR
+                        
+                     ELSE
+!     ...It comes here only when ic=ir=1
+!     clue: rkco<-breid<-talk<-label(6,i)
+                        NCORE = NCORE + 1
+                        ELSTO = ELSTO + CONTR
+                     ENDIF
+                  ENDIF
+ 8             CONTINUE
+*     
+               IBUG1 = 0
+*     
+!     ...ELSTO is a constant over all diagonals, thus its
+!     contribution to the total energy can be added later
+!     IF (IR .EQ. IC) ELEMNT = ELEMNT + ELSTO
+*     
+!     ENDIF   !inc2 is always 1 without PRE-RUN
+            ENDIF
+!     ...LTRANS .AND. (INC2.EQ.1) <------------
+************************************************************************
+!     
+!     Store this element if it is diagonal or its value is greater than 
+!     CUTOFF
+!     
+            IF ( (IR .EQ. IC) .OR. (DABS (ELEMNT) .GT. CUTOFF) ) THEN
+               NELC       = NELC + 1
+               EMT(NELC)  = ELEMNT
+               IROW(NELC) = IR
+            ENDIF
+            
+*     Per for shift
+            
+            IF (nshiftj(jblock).GT.0) THEN
+               DO ishift = 1,nshiftj(jblock)
+                  IF ((IR .EQ. IC) .AND.
+     &                 (nasfshift(jblock,ishift).EQ. IR)) THEN
+                     write(*,*)
+                     write(*,*) 'Diagonalelement shifted for',IR
+                     write(*,*) 'Energy shift in Hartree ',
+     &                    asfenergy(jblock,ishift)
+                     write(*,*) 'Energy shift in cm-1 ',
 C     &                        2*109737.7*asfenergy(jblock,ishift)
-     &                        aucm*asfenergy(jblock,ishift)
-                  write(*,*)
-                  EMT(NELC) = EMT(NELC) + asfenergy(jblock,ishift)
-               END IF
-            END DO
-         ENDIF
-
-* Per end
-
-*
-   85    CONTINUE            
-c zou
-c        print *, ic,SLF_EN(IC)
+     &                    aucm*asfenergy(jblock,ishift)
+                     write(*,*)
+                     EMT(NELC) = EMT(NELC) + asfenergy(jblock,ishift)
+                  END IF
+               END DO
+            ENDIF
+            
+*     Per end
+            
+*     
+ 85      CONTINUE            
+c     zou
+c     print *, ic,SLF_EN(IC)
          IF(LSE) EMT(NELC) = EMT(NELC) + SLF_EN(IC)
-c zou
-*
-*   This column is done; write it to disk
-*
+c     zou
+*     
+*     This column is done; write it to disk
+*     
          WRITE (imcdf) NELC, ELSTO, (EMT(IR), IR = 1, NELC),
-     :                             (IROW(IR), IR = 1, NELC)
+     :        (IROW(IR), IR = 1, NELC)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! This EAV (and the above EMT) does not have ELSTO.
+!     This EAV (and the above EMT) does not have ELSTO.
          EAV = EAV + EMT(NELC)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-*
-!-----------------------------------------------------------------------
-CFF      IF (MOD (IC, 20) .EQ. 0 .OR.
-         IF (MOD (IC, 100) .EQ. 0 .OR.
-     &       IC .LT. nprocs*2 .OR. IC .GT. (NCF-nprocs*2)) THEN
-            PRINT *, 'Row ', IC, ': ', NELC, ' nonzero elements;'
-     &             , '  block = ', jblock
-         ENDIF
-*
-*   Update the counter for the total number of elements
-*
-         NELMNT = NELMNT + NELC
-
-!ASIMINA-----------------------------------------------------------------
-         
-
-!-------------------------------------------------------------------------
-         
 *     
-   10 CONTINUE
+!-----------------------------------------------------------------------
+CFF   IF (MOD (IC, 20) .EQ. 0 .OR.
+         IF (MOD (IC, 100) .EQ. 0 .OR.
+     &        IC .LT. nprocs*2 .OR. IC .GT. (NCF-nprocs*2)) THEN
+            PRINT *, 'Row ', IC, ': ', NELC, ' nonzero elements;'
+     &           , '  block = ', jblock
+         ENDIF
+*     
+*     Update the counter for the total number of elements
+*     
+         NELMNT = NELMNT + NELC         
+*     
+ 10   CONTINUE
 ************************************************************************
-*
-*   Deallocate storage for the arrays in /BUFFER/
-*
+*     
+*     Deallocate storage for the arrays in /BUFFER/
+*     
       CALL ALCBUF (3)
-
+      
 *     ...Locals
       CALL DALLOC (PNTEMT)
       CALL DALLOC (PNIROW)
-
-!  Fill the common block /setham_to_genmat2/ for use in genmat2
-
+      
+!     Fill the common block /setham_to_genmat2/ for use in genmat2
+      
       CUTOFFtmp = CUTOFF
       NCOEItmp = NCOEI
       NCOECtmp = NCOEC

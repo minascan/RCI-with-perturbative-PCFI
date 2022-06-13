@@ -71,28 +71,21 @@ CGG      PARAMETER (NNNW = 120)
 *
 *   If the CSFs are not treated uniformly, write out an
 *   informative message
-*
-!ASIMINA
-      PRINT *, 'Hello 1'
-      
+*      
       IF (LFORDR) THEN
          WRITE (24,*)
          do nb = 1, nblock
             do npp = 1, npcfi
                iccut = ICCUTBLK2(nb,npp)
-!ASIMINA ----some priniting----
-               PRINT *, 'nb ', nb, 'npp ', npp, 'iccut ', iccut
-               
+!ASIMINA ----some printing----
+!               PRINT *, 'nb ', nb, 'npp ', npp, 'iccut ', iccut              
                CALL convrt2 (ICCUT,RECORD,LENTH, 'strsum.icccut')
                WRITE (24,*) ' CSFs 1--'//RECORD(1:LENTH)//' constitute'
      :              //' the zero-order space;  nb = ', nb,
      &              ' ncf = ', ncfblk(nb)
             enddo
          enddo
-      ENDIF
-!     ASIMINA
-      PRINT *, 'Hello 2'
-      
+      ENDIF      
 *
 *   Write out the nuclear parameters
 *
@@ -112,8 +105,6 @@ CGG      PARAMETER (NNNW = 120)
       ELSE
          WRITE (24,*) ' point nucleus.'
       ENDIF
-!     ASIMINA
-      PRINT *, 'Hello 3'
 *
 *   Write out the physical effects specifications
 *
@@ -138,9 +129,7 @@ CGG      PARAMETER (NNNW = 120)
      :              //' H (Self Energy) will be estimated'
          WRITE (24,*) ' from a screened hydrogenic'
      :              //' approximation.'
-      ENDIF
-!     ASIMINA
-      PRINT *, 'Hello 4'      
+      ENDIF      
 *
 *   Write out the parameters of the radial grid
 *
@@ -150,9 +139,7 @@ CGG      PARAMETER (NNNW = 120)
       ELSE
          WRITE (24,306) RNT,H,HP,N
       ENDIF
-      WRITE (24,307) R(1),R(2),R(N)
-!     ASIMINA
-      PRINT *, 'Hello 5'     
+      WRITE (24,307) R(1),R(2),R(N)     
 *
 *   Write out the orbital properties
 *
@@ -164,10 +151,9 @@ CGG      PARAMETER (NNNW = 120)
 !      DO 1 I = 1,NW
 !         WRITE (24,309) NP(I),NH(I),E(I),PZ(I),
 !     :                  GAMA(I),PF(2,I),QF(2,I),MF(I)
-!    1 CONTINUE
-!     ASIMINA
-      PRINT *, 'Hello 6'      
-*
+!    1 CONTINUE     
+
+*     
 *   Write the list of eigenpair indices
 *
       WRITE (24,*)
@@ -197,9 +183,7 @@ CGG      PARAMETER (NNNW = 120)
             ENDIF
     2    CONTINUE
          IF (IEND .NE. 2) WRITE (24,*) RECORD(1:IEND)
-      ENDIF
-!     ASIMINA
-      PRINT *, 'Hello 7'      
+      ENDIF     
 *
       RETURN
 *

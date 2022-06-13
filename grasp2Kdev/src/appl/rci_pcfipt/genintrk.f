@@ -33,23 +33,22 @@ CGG      PARAMETER (NNNW = 120)
       POINTER (PCTEVLRK,VALTEIRK(1))
       POINTER (PCTEILRK, INDTEIRK(1))
 
-!-----------------------------------------------------------------------
-
-!ASIMINA  ORB2/NCF is the number of basis functions, NW numb. of orbitals, NP principal q. numb., NAK is k q. numb.
+!------------------------------------------------------------------------
+!     ASIMINA  ORB2/NCF is the number of basis functions, NW # of orbitals,
+!              NP principal q. numb., NAK is k q. numb.
       
       KEY = NW + 1
       KSTART(0) = 1
 
       write(*,*) 'NW ', NW 
 
-!ASIMINA      some more printing
+!ASIMINA      some printing
       do i = 1, NW
          write(*,*) 'NP ',NP(i), 'NAK ', NAK(i), 'NKL ', NKL(i),
      :        'NKJ ', NKJ(i)
       end do
 *
 *     Find 2*JMAX; it should not be greater than PARAMETER KMAX
-!ASIMINA what is the PARAMETER KMAX ?
 *
       J2MAX = NKJ(1)
       DO I = 2, NW
@@ -76,11 +75,7 @@ CGG      PARAMETER (NNNW = 120)
                            N = N + 1
                            IF (GEN .AND. (MOD(N,nprocs) .EQ. myid)) THEN
                               INDTEIRK(N) = ((IA*KEY+IB)*KEY+IC)*KEY+ID
-                              VALTEIRK(N) = SLATER (IA,IB,IC,ID,K)
-!ASIMINA  some printing
-!                              write(*,*) 'IA ', IA, 'IB ', IB, 'IC ', IC
-!     :                             ,'ID ', ID, 'INDTEIRK ' , INDTEIRK(N)
-!     :                             ,'VALTEIRK ', VALTEIRK(N)   
+                              VALTEIRK(N) = SLATER (IA,IB,IC,ID,K)   
                            ENDIF
                         ENDIF
                      ENDDO
@@ -110,7 +105,6 @@ CGG      PARAMETER (NNNW = 120)
          GEN = .TRUE.
          GOTO 999
       ENDIF
-
-!ASIMINA now we go back to the loop and actually calculate the integrals            
+           
       RETURN
       END

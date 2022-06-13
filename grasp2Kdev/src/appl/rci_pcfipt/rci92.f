@@ -37,16 +37,16 @@
 *   Modified by Gediminas Gaigalas for new spin-angular integration.   *
 *                                                                      *
 ************************************************************************
-*
-!ASIMINA 
-      USE PCFI_PT_MOD      
+* 
+      USE PCFI_PT_MOD          ! ASIMINA
       
       IMPLICIT REAL*8          (A-H, O-Z)
 
 ! cpath uses
 
-      CHARACTER*128 NAME, tmpdir, permdir, isofile
-
+!      CHARACTER*128 NAME, tmpdir, permdir, isofile
+      CHARACTER*128 tmpdir, permdir, isofile
+      
 CGG      PARAMETER (nblk0 = 20)
       PARAMETER (nblk0 = 50)
       CHARACTER*8 idblk(nblk0)
@@ -108,15 +108,19 @@ CGG      PARAMETER (nblk0 = 20)
       open(UNIT=31,STATUS="SCRATCH",FORM="FORMATTED")
 
       write(*,*)
-      write(*,*) 'RCI'
-      write(*,*) 'This is the configuration interaction program '
-      write(*,*) 'Input file:  isodata, name.c, name.w'
-      write(*,*) 'Outputfiles: name.cm, name.csum, name.clog '
-      write(*,*) '             rci.res (can be used for restart)'
+      write(*,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+      write(*,*) '    RCI combined with perturbative PCFI method    '
+      write(*,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+      write(*,*) 'This is the NEW configuration interaction program '
+      write(*,*) '__________________________________________________'
+      write(*,*) 'Input files:  isodata, name.c, and name.pt (the   '
+      write(*,*) '  (latter .pt file defines the different .w files)'
+      write(*,*) 'Output files: name.cm, name.csum, name.clog, and  '
+      write(*,*) '                 rci.res (can be used for restart)'
+      write(*,*) '__________________________________________________'
       write(*,*)
 
       CALL starttime (ncount1, 'RSCF2')
-
 !
 ! Start timing
 !
@@ -137,7 +141,8 @@ CGG         WRITE (istde,*)
 ! Get name of the state (used in files like <name>.c, <name>.s)
 !
          DO
-            WRITE (istde,'(A)',ADVANCE='NO') ' Name of state: '
+            WRITE (istde,'(A)',ADVANCE='NO') ' File that contains'// 
+     &' zero/first order CSFs: '
             READ (*,'(A)') NAME
             K = INDEX (NAME,' ')
             IF (K .GT. 1) EXIT
@@ -155,13 +160,14 @@ CGG         WRITE (istde,*)
 !         ...Form the full name of the files used on node-0
 
          lenname = LEN_TRIM (NAME)
+         
          isofile = 'isodata'
 C         print *, 'isofile = ', isofile(1:LEN_TRIM (isofile))
 C         print *, 'name = ', name(1:LEN_TRIM (name))
 
 
-!ASIMINA ----------------------------------------------------------------
-!For implementing the pertubative PCFI: always NOT FULL interaction
+! ASIMINA ---------------------------------------------------------------
+! For implementing the pertubative PCFI: always NOT FULL interaction
          
 !         WRITE (istde,'(A)',ADVANCE='NO') ' Full interaction? '
 !         YES = GETYN ()
@@ -174,57 +180,14 @@ C         print *, 'name = ', name(1:LEN_TRIM (name))
 !            write(734,'(A)') 'n            ! Full interaction'
 !         ENDIF
 
-!ASIMINA----------------------------------------------------------------
-! Get name of the state of the first subblock (used in files <name>.w)
-! That is PCFINAME(i), where i is the number of PCFIs.            
-! Reading the number of pcfi's, the pcfi file names and the number of
-! CSFs in each pcfi file.
-         
-!            WRITE (istde,'(A)') ' How many PCFI files? '
-!            READ (*,*) NPCFI            
-!            ALLOCATE(PCFINAME(NPCFI))
-!            ALLOCATE(NCSFPCFI(NPCFI))
-            
-!            IF (NPCFI < 0) THEN
-!               WRITE (istde,*) 'Number of PCFI cannot be negative. &
-!    :                         redo...'
-!              EXIT
-!            ELSEIF (NPCFI >= 0) THEN
-!               DO i = 1, NPCFI
-!                 DO
-!                     WRITE(istde,'(A,I3)') ' Give name of PCFI ', i
-!                     READ (*,*) PCFINAME(i)
-!                    L = INDEX (PCFINAME,' ')
-!                    IF (L .GT. 1) EXIT
-!                    WRITE (istde,*) 'Name may not start with a blank. &
-!    :                               redo...'
-!                 ENDDO
-!                 WRITE(istde,'(A,I3)') ' Give the number of CSFs of the
-!    :                                  PCFI file ',i
-!                 READ (*,*) NCSFPCFI(i)
-!               ENDDO
-!            ENDIF                     
-!--------------------------------------------------------------------------
-!ASIMINA-------------------------------------------------------------------
-! Now I want to use the newly constructed PCFIPTINP subrout and I only need
-! to get the name of the output file from the running of the rpcfcollect 
 
-            DO
-               WRITE (istde,'(A)',ADVANCE='NO') ' Name of the file that 
-     :contains zero & first order CSFs: '
-               READ (*,'(A)') COLLECTOUT
-               K = INDEX (NAME,' ')
-               IF (K .GT. 1) EXIT
-               WRITE (istde,*) 'Name may not start with a blank. redo..'
-            ENDDO
-
-!ASIMINA ''COLLECTOUT'' answer needs to be added to the .log file            
-!------------------------------------------------------------------------
-!ASIMINA
-            WRITE(*,*) ' Iccut input follows '
+! ASIMINA ---------------------------------------------------------------
+! Subroutine that uses the output (.pt) file from rpcfcollect program
+            WRITE(*,*)
+            WRITE(*,*) 'Iccut input follows '
             CALL PCFIPTINP
-!-----------------------------------------------------------------------   
- 99   CONTINUE 
+!------------------------------------------------------------------------
+ 99   CONTINUE
 !     
 !     Check compatibility of plant substitutions. 
 !     
@@ -260,17 +223,15 @@ C      PRINT *, 'Calling setcsl...'
 !ASIMINA  .res file contains the computed matrix elements   - binary file  
 !
 C      PRINT *, 'Calling SETRES...'
-      CALL SETRES (isofile, name(1:lenname) // '.w', idblk)
+      CALL SETRES (isofile)
+      !CALL SETRES (isofile, name(1:lenname) // '.w', idblk)      !ASIMINA
 *
 *         Open the  .mix  file; determine the eigenpairs required
-!ASIMINA  .mix file contains the mixing coefficients and energy eigenvalues
-!ASIMINA  binary file / rlevels
 *
 C      PRINT *, 'Calling SETMIX...'
       CALL SETMIX (NAME, idblk)
 *
-*        Append a summary of the inputs to the  .sum  file
-!ASIMINA Before the calculations basic information is now written out in the summary file      
+*        Append a summary of the inputs to the  .sum  file     
 *
       PRINT *, 'Calling STRSUM...'
       CALL STRSUM
@@ -279,32 +240,6 @@ C      PRINT *, 'Calling SETMIX...'
 *
       PRINT *, 'Calling FACTT...'
       CALL FACTT
-      
-!--------------------------------------------------------------------------      
-!--------------------------------------------------------------------------
-!ASIMINA for the PCFI-PT method the computation of the one- and two-electron
-!     integrals is moved to the setham subroutine.
-!---------------------------------------------------------------------------      
-!ASIMINA Calculate all the needed one-electron Iab integrals      
-!
-!      PRINT *, 'Calling GENINTIAB...'
-!      CALL GENINTIAB (myid, nprocs, ndum)     
-*     
-*   Calculate all the needed Rk integrals 
-*
-!      PRINT *, 'Calling GENINTRK...'
-!      CALL GENINTRK (myid, nprocs, ndum, j2max)
-!---------------------------------------------------------------------------
-!---------------------------------------------------------------------------   
-*
-*   If transverse interaction comput Breit integrals of type 1 and 2
-*
-      IF (LTRANS) THEN
-         PRINT *, 'Calling GENINTBREIT1...'
-         CALL GENINTBREIT1 (myid, nprocs, ndum, j2max)
-         PRINT *, 'Calling GENINTBREIT2...'
-         CALL GENINTBREIT2 (myid, nprocs, ndum, j2max)
-      END IF
 *
 *   Proceed with the CI calculation
 *

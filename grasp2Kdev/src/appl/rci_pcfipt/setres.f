@@ -1,6 +1,7 @@
 ************************************************************************
 *                                                                      *
-      SUBROUTINE SETRES (isofile, rwffile, idblk)
+      SUBROUTINE SETRES (isofile)
+      !SUBROUTINE SETRES (isofile, rwffile, idblk)       !ASIMINA
       IMPLICIT REAL*8          (A-H, O-Z)
 *                                                                      *
 *   Open, check, load data from the  .res  file.                       *
@@ -12,7 +13,8 @@
 *                                                                      *
 ************************************************************************
 *
-      CHARACTER*(*) isofile, rwffile, idblk(*)*8
+      CHARACTER*(*) isofile
+      !CHARACTER*(*) isofile, rwffile, idblk(*)*8
       CHARACTER(LEN=*), PARAMETER:: FORM = 'UNFORMATTED', 
      &                              STATUS = 'UNKNOWN',
      &                              RESTITLE = 'R92RES'
@@ -86,8 +88,8 @@ C      ENDIF
 !         ...Write the file header
 !         ...Generate the first part of the .res file
          WRITE (imcdf) RESTITLE
-         CALL GETCID (isofile, rwffile, idblk)
-
+         CALL GETCID (isofile)
+         !CALL GETCID (isofile, rwffile, idblk)      !ASIMINA
       ENDIF
 
       RETURN

@@ -12,11 +12,10 @@
 *                                                                      *
 *     Call(s) to: [LIB92]: ALLOC, RINTI                                *
 *                                                                      *
-*     Written by Asimina Papoulia                                      *
+*     Written by Asimina Papoulia                  Feb 2017            *
 *                                                                      *
 ************************************************************************
       
-!      USE test_mod
       IMPLICIT REAL*8          (A-H, O-Z)
 
       include 'parameters.def'
@@ -34,16 +33,8 @@ CGG   PARAMETER (KEYORB = 121)
       POINTER (PCOEIL,INDOEI(1))
       POINTER (PCOEVL,VALOEI(1))
 
-!-----------------------------------------------------------------------
-      WRITE (*,*) 'Hello, Integrals I are calculated here'
-      WRITE(*,*) 'Hello, N_ASIMINA value ', n_ASIMINA
-      WRITE(*,*) 'NCOEI ', NCOEI
-      KEY = NW + 1
-      WRITE (*,*) 'NW ', NW
-      DO i = 1, NW
-         WRITE(*,*) 'NKJ ', NKJ(i)
-      ENDDO
-!      NCOEI = 0
+      
+      KEY = NW + 1    
      
 ! Make the I integrals
 ! When GEN is false, sweep through to find dimension
@@ -85,7 +76,7 @@ CGG   PARAMETER (KEYORB = 121)
          GOTO 999
       ENDIF
       
-! now we go back to the loop and actually calculate the integrals 
+! Now we go back to the loop to calculate the integrals 
       RETURN
       END
       

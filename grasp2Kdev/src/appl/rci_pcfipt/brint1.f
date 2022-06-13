@@ -4,7 +4,7 @@
 *                                                                      *
 *   Returns integrals for the transverse photon interaction.           *
 *                                                                      *
-*   Written by Per Jonsson                   Octaober 2014             *
+*   Written by Per Jonsson                   October 2014              *
 *                                                                      *
 ************************************************************************
 *

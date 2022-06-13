@@ -5,7 +5,7 @@
 *                                                                      *
 *     This routine returns I(ab) integrals.                            *
 *                                                                      *
-*     Written by Asimina Papoulia                                      *
+*     Written by Asimina Papoulia                 February 2017        *
 *                                                                      *
 ************************************************************************
 *

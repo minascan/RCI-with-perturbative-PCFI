@@ -3,25 +3,22 @@
       subroutine pcfiptinp 
 *                                                                      *
 *     It takes as input the output file from the rpcfcollect program   *
-*     and gives as output the values of the  npcfi, namepcfi(npcfi)    *
+*     and gives as output the values of the:  npcfi, pcfiname(npcfi)   *
 *     and iccutblk2(nblock,npcfi) variables                            *
 *                                                                      * 
 *     Written by Asimina Papoulia                           May 2017   * 
 *                                                                      *
 ************************************************************************
 
-       use pcfi_pt_mod
+      use pcfi_pt_mod
       
       implicit none
-
-!     Maybe include some of the followings in the pcfi_pt_mod.f module ?
-!     use pcfi_pt_mod   
+   
       character(200)  :: string, dummy
-      character(9)    :: filename
       character(22)   :: dummy22
       integer         :: count, dash, found, line
       integer         :: j, i
-      integer         :: nblock ! as it is in the getcid subroutine right ?
+      integer         :: nblock ! as it is in the getcid subroutine ?
       integer         :: csf(10,10)
       
 !     Initialize
@@ -30,8 +27,8 @@
       count = 0
 !     Counter for the number of the "dashed" lines in the input file
       dash = 0
-           
-      open(20, file=trim(collectout)//'.pt', status='old',
+      
+      open(20, file=trim(name)//'.pt', status='old',
      &  form='formatted') 
       
       do
@@ -53,10 +50,10 @@
 !-----------------------------------------------------------------------
 !     Here we take the integer value for the npcfi variable
       npcfi = line - 3
-!-----------------------------------------------------------------------      
-      nblock = dash/2         ! check further if nblock already exist
-                              ! variable in the rci program
-
+!-----------------------------------------------------------------------
+      nblock = dash/2         ! nblock is later again determined 
+                              ! in the setcsll (lib/lib92)
+      
 ! Some printing follows      
 !      write(*,'(a36,i3)') ' The number of lines in the file is ', count
 !      write(*,'(a28,i3)') ' The partitions end in line ', line
@@ -72,7 +69,7 @@
       enddo
 !-----------------------------------------------------------------------      
 !     Here we take the character values for the NAMEPCFI(npcfi) variables
-      write(*,'(a)') ' The files that contains the partitions are: '
+      write(*,'(a)') ' The files that contain the partitions are: '
       do j =1,npcfi
          read(20,'(a)') pcfiname(j)
          write(*,*) trim(pcfiname(j))

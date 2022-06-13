@@ -1,6 +1,7 @@
 ************************************************************************
 *                                                                      *
-      SUBROUTINE GETCID (isofile, rwffile, idblk)
+      SUBROUTINE GETCID (isofile)
+      !SUBROUTINE GETCID (isofile, rwffile, idblk)      !ASIMINA
 *                                                                      *
 *   Interactively determines the data governing the CI problem.        *
 *   iccut is replaced by an array iccutblk(1:nblock)
@@ -12,13 +13,13 @@
 *   Block version by Xinghong He          Last revision: 15 Jun 1998   *
 *                                                                      *
 ************************************************************************
-*
-!ASIMINA      
-      USE PCFI_PT_MOD
+*     
+      USE PCFI_PT_MOD          ! ASIMINA 
       
       IMPLICIT REAL*8          (A-H, O-Z)
-      CHARACTER*(*) isofile, rwffile, idblk(*)*8
-
+      CHARACTER*(*) isofile
+      !CHARACTER*(*) isofile, rwffile, idblk(*)*8
+      
       include 'parameters.def'
 CGG      PARAMETER (NNNP = 590)
 CGG      PARAMETER (NNN1 = NNNP+10)
@@ -100,28 +101,27 @@ C      ENDIF
 ! non-default mode, as the above case for speed of light.
 ! Quantities to be obtained: LFORDR
 !
-      IF (NDEF .NE. 0) THEN
+!      IF (NDEF .NE. 0) THEN
 C         WRITE (istde,*) 'Treat contributions of some CSFs'
 C     &,                    ' as first-order perturbations?'
 C         LFORDR = GETYN ()
          LFORDR = .TRUE.
-      ELSE
-         LFORDR = .FALSE.
-      ENDIF
+!      ELSE
+!         LFORDR = .FALSE.
+!      ENDIF
 
 ! Get ICCUTBLK2() from the user-input
 
-      IF (.NOT. LFORDR) THEN
+!      IF (.NOT. LFORDR) THEN
          !...Default first
-         DO i = 1, nblock
-            DO j = 1, npcfi
-               ICCUTBLK2(i,j) = ncfblk(i)
-            ENDDO
-         ENDDO
-      ENDIF
+!         DO i = 1, nblock
+!            DO j = 1, npcfi
+!               ICCUTBLK2(i,j) = ncfblk(i)
+!            ENDDO
+!         ENDDO
+!      ENDIF
 !ASIMINA -----------------------------------------------------------
-! Now that the PCFIPTINP subroutine exists I should just comment out
-! the following lines         
+! Now that the PCFIPTINP subroutine exists I comment the following lines    
 !ASIMINA -----------------------------------------------------------
 !For implementing the pertubative PCFI: always NOT FULL interaction
          

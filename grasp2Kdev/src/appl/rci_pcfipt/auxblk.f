@@ -1,4 +1,10 @@
+************************************************************************
+*                                                                      *
       SUBROUTINE auxblk (j2max, atwinv)
+*                                                                      *
+*   Routine for initializing some logical and other variables          *      
+************************************************************************
+*      
       IMPLICIT REAL*8          (A-H, O-Z)
 
       include 'parameters.def'
@@ -66,9 +72,8 @@ CGG      PARAMETER (NNNW = 120)
 
 ************************************************************************
 
-      FRSTCO = .TRUE.
-      
 !ASIMINA not used after introducing genintiab and iabintc subroutines      
+!      FRSTCO = .TRUE.              
 !      NCOEI = 0
 
       IF (LTRANS) THEN
@@ -101,11 +106,14 @@ CGG      PARAMETER (NNNW = 120)
             WRITE (istde,*) 'large for the brint routine'
             STOP
          ENDIF
-
-         DO I = 1,6
-            FIRST(I) = .TRUE.
-            NTPI(I) = 0
-         ENDDO
+         
+!ASIMINA
+! This is moved to where the deallocation of the integral lists from the
+! transverse photon interaction operator takes place in the SETHAM_GG 
+!         DO I = 1,6
+!            FIRST(I) = .TRUE.
+!            NTPI(I) = 0
+!         ENDDO
       ENDIF
 *
 *   Initialisations for the vacuum polarisation corrections
