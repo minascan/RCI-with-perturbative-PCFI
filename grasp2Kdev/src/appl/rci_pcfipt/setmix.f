@@ -16,7 +16,7 @@
       IMPLICIT REAL*8          (A-H, O-Z)
       CHARACTER*(*) name, idblk(*)*8
       CHARACTER(LEN=*), PARAMETER:: FORM = 'UNFORMATTED',
-     &										STATUS = 'UNKNOWN'
+     &		STATUS = 'UNKNOWN'
 
 !-----------------------------------------------------------------------
       k = INDEX (name,' ')

@@ -37,13 +37,16 @@
 *   Modified by Gediminas Gaigalas for new spin-angular integration.   *
 *                                                                      *
 ************************************************************************
-*
+* 
+      USE PCFI_PT_MOD          ! ASIMINA
+      
       IMPLICIT REAL*8          (A-H, O-Z)
 
 ! cpath uses
 
-      CHARACTER*128 NAME, tmpdir, permdir, isofile
-
+!      CHARACTER*128 NAME, tmpdir, permdir, isofile
+      CHARACTER*128 tmpdir, permdir, isofile
+      
 CGG      PARAMETER (nblk0 = 20)
       PARAMETER (nblk0 = 50)
       CHARACTER*8 idblk(nblk0)
@@ -95,9 +98,9 @@ CGG      PARAMETER (nblk0 = 20)
       INTEGER  nYMDUHMSM(8)
                !Year Month Day Universal Hour Minute Sesond Millisecond
 
-		CHARACTER str*8, msg*128
+      CHARACTER str*8, msg*128
 !-----------------------------------------------------------------------
-
+                
       imcdf = 26	! Unit for rci.res file
       IPRERUN = 0
       myid = 0
@@ -105,17 +108,19 @@ CGG      PARAMETER (nblk0 = 20)
       open(UNIT=31,STATUS="SCRATCH",FORM="FORMATTED")
 
       write(*,*)
-      write(*,*) 'RCI'
-      write(*,*) 'This is the configuration interaction program '
-      write(*,*) 'Input file:  isodata, name.c, name.w'
-      write(*,*) 'Outputfiles: name.cm, name.csum, name.clog '
-      write(*,*) '             rci.res (can be used for restart)'
+      write(*,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+      write(*,*) '    RCI combined with perturbative PCFI method    '
+      write(*,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+      write(*,*) 'This is the NEW configuration interaction program '
+      write(*,*) '__________________________________________________'
+      write(*,*) 'Input files:  isodata, name.c, and name.pt (the   '
+      write(*,*) '  (latter .pt file defines the different .w files)'
+      write(*,*) 'Output files: name.cm, name.csum, name.clog, and  '
+      write(*,*) '                 rci.res (can be used for restart)'
+      write(*,*) '__________________________________________________'
       write(*,*)
 
       CALL starttime (ncount1, 'RSCF2')
-
-
-
 !
 ! Start timing
 !
@@ -136,7 +141,8 @@ CGG         WRITE (istde,*)
 ! Get name of the state (used in files like <name>.c, <name>.s)
 !
          DO
-            WRITE (istde,'(A)',ADVANCE='NO') ' Name of state: '
+            WRITE (istde,'(A)',ADVANCE='NO') ' File that contains'// 
+     &' zero/first order CSFs: '
             READ (*,'(A)') NAME
             K = INDEX (NAME,' ')
             IF (K .GT. 1) EXIT
@@ -154,30 +160,41 @@ CGG         WRITE (istde,*)
 !         ...Form the full name of the files used on node-0
 
          lenname = LEN_TRIM (NAME)
+         
          isofile = 'isodata'
 C         print *, 'isofile = ', isofile(1:LEN_TRIM (isofile))
 C         print *, 'name = ', name(1:LEN_TRIM (name))
 
 
-         WRITE (istde,'(A)',ADVANCE='NO') ' Full interaction? '
-         YES = GETYN ()
-         IF (YES) THEN
-            NDEF = 0
-            write(734,'(A)') 'y            ! Full interaction'
-         ELSE
+! ASIMINA ---------------------------------------------------------------
+! For implementing the pertubative PCFI: always NOT FULL interaction
+         
+!         WRITE (istde,'(A)',ADVANCE='NO') ' Full interaction? '
+!         YES = GETYN ()
+!         IF (YES) THEN
+!            NDEF = 0
+!            write(734,'(A)') 'y            ! Full interaction'
+!         ELSE
+            !ASIMINA 
             NDEF = 1
-            write(734,'(A)') 'n            ! Full interaction'
-         ENDIF
+!            write(734,'(A)') 'n            ! Full interaction'
+!         ENDIF
 
 
-   99 CONTINUE
-!
-! Check compatibility of plant substitutions. 
-!
-C      PRINT *, 'Calling CHKPLT...'
+! ASIMINA ---------------------------------------------------------------
+! Subroutine that uses the output (.pt) file from rpcfcollect program
+            WRITE(*,*)
+            WRITE(*,*) 'Iccut input follows '
+            CALL PCFIPTINP
+!------------------------------------------------------------------------
+ 99   CONTINUE
+!     
+!     Check compatibility of plant substitutions. 
+!     
+C     PRINT *, 'Calling CHKPLT...'
       CALL CHKPLT ('RCI92')
-
-!
+      
+!     
 ! In SETDBG of this version all control logicals are set to 
 ! false thus no debug output will be made
 !
@@ -200,19 +217,21 @@ C      PRINT *, 'Calling SETSUM...'
       CALL SETSUM (NAME)
 
 C      PRINT *, 'Calling setcsl...'
-      CALL setcsl (name(1:lenname) // '.c', ncore, nblk0, idblk)
+      CALL SETCSL (name(1:lenname) // '.c', ncore, nblk0, idblk)
 !
-! Set up the  .res  file; determine if this is a restart.
+!         Set up the  .res  file; determine if this is a restart.
+!ASIMINA  .res file contains the computed matrix elements   - binary file  
 !
 C      PRINT *, 'Calling SETRES...'
-      CALL SETRES (isofile, name(1:lenname) // '.w', idblk)
+      CALL SETRES (isofile)
+      !CALL SETRES (isofile, name(1:lenname) // '.w', idblk)      !ASIMINA
 *
-*   Open the  .mix  file; determine the eigenpairs required
+*         Open the  .mix  file; determine the eigenpairs required
 *
 C      PRINT *, 'Calling SETMIX...'
       CALL SETMIX (NAME, idblk)
 *
-*   Append a summary of the inputs to the  .sum  file
+*        Append a summary of the inputs to the  .sum  file     
 *
       PRINT *, 'Calling STRSUM...'
       CALL STRSUM
@@ -221,20 +240,6 @@ C      PRINT *, 'Calling SETMIX...'
 *
       PRINT *, 'Calling FACTT...'
       CALL FACTT
-*
-*   Calculate all the needed Rk integrals 
-*
-      PRINT *, 'Calling GENINTRK...'
-      CALL GENINTRK (myid, nprocs, ndum, j2max)
-*
-*   If transverse interaction comput Breit integrals of type 1 and 2
-*
-      IF (LTRANS) THEN
-         PRINT *, 'Calling GENINTBREIT1...'
-         CALL GENINTBREIT1 (myid, nprocs, ndum, j2max)
-         PRINT *, 'Calling GENINTBREIT2...'
-         CALL GENINTBREIT2 (myid, nprocs, ndum, j2max)
-      END IF
 *
 *   Proceed with the CI calculation
 *

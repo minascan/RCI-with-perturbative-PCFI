@@ -15,8 +15,8 @@
 export   FC=gfortran                                           # Fortran compiler 
 export   FC_FLAGS="-O2 -fno-automatic -fcray-pointer"          # Serial code compiler flags
 export   FC_LD="-static-libgfortran"                           # Serical linker flags
-#export   GRASP="${PWD}"                                        # Location of the grasp2k root directory
-export   GRASP="/home/asimina/Programs/GRASP2K_CPC_SUBMIT_CFF_JACEK_PER_GG/grasp2Kdev"     # Location of the grasp2k root directory
+export   GRASP="${PWD}"                                        # Location of the grasp2k root directory
+#export   GRASP="/home/asimina/Programs/GRASP2K_CPC_SUBMIT_CFF_JACEK_PER_GG/grasp2Kdev"     # Location of the grasp2k root directory
 export   LAPACK_LIB="-llapackd -llapacku -lblas"               # Libraries to be searched
 export   LAPACK_DIR="${GRASP}/lib"                             # Location of LAPACK library 
 #export   LAPACK_LIB="-llapack -lblas"                          # Libraries to be searched

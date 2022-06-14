@@ -14,8 +14,10 @@
 CGG      PARAMETER (NNNW = 120)
       CHARACTER*2 NH
 *
+!---------------------------------------------------------------------
       POINTER (PLABEL,LABEL(6,1))
       POINTER (PCOEFF,COEFF(1))
+!---------------------------------------------------------------------
 *
       COMMON/BUFFER/NBDIM,PLABEL,PCOEFF,NVCOEF
      :      /DEBUG/IBUG1,IBUG2,IBUG3,IBUG4,IBUG5,IBUG6

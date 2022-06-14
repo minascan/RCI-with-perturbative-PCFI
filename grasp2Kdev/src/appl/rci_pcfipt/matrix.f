@@ -2,7 +2,7 @@
 *                                                                      *
       SUBROUTINE MATRIX (ncore, j2max)
 *       lodcsh2 needs ncore
-*                                                                n      *
+*                                                                n     *
 *   This SUBROUTINE calls routines to  form the  Hamiltonian  matrix   *
 *   and to diagonalise it.   The total angular momenta and parity of   *
 *   the ASF are found;  the eigenvectors are chosen so that the sign   *
@@ -27,9 +27,9 @@
 CGG      PARAMETER (NNNW = 120)
 CGG      PARAMETER (NNNWP = 30)
       POINTER (PIENDC,ENDCDUMMY)
-      POINTER (PNTRPF,RPFDUMMY)
-      POINTER (PNTRQF,RQFDUMMY)
-      LOGICAL LFORDR,LTRANS,LVP,LSE,LNMS,LSMS,LDBPG
+!      POINTER (PNTRPF,RPFDUMMY)
+!      POINTER (PNTRQF,RQFDUMMY)
+      LOGICAL LFORDR,LVP,LSE,LNMS,LSMS,LDBPG
       CHARACTER*8 CNUM
 *
       DIMENSION SLFINT(NNNW) !,UCF(1),SLF_EN(1) COmmented out 2/10/2003
@@ -51,7 +51,7 @@ CGG      PARAMETER (NNNWP = 30)
       POINTER (PNJCUP,JCUPA(NNNWP,1))
 *
       COMMON/DEBUGG/LDBPG(5)
-     :      /DECIDE/LFORDR,LTRANS,LVP,LSE,LNMS,LSMS
+     :      /DECIDE/LFORDR,LVP,LSE,LNMS,LSMS
      :      /EIGVAL/EAV,PNEVAL
      :      /EIGVEC/PNEVEC
      :      /FOPARM/ICCUT
@@ -59,7 +59,7 @@ CGG      PARAMETER (NNNWP = 30)
      :      /ORB2/NCF,NW,PNTRIQ
      :      /PRNT/NVEC,PNIVEC,NVECMX
      :      /STAT/PNTJQS,PNJCUP
-     :      /WAVE/PZ(NNNW),PNTRPF,PNTRQF,MF(NNNW)
+     :      /WAVE/PZ(NNNW),MF(NNNW)
      :      /WHERE/IMCDF
      :      /BLIM/IPRERUN,NCSFPRE,COEFFCUT1,COEFFCUT2
      :      /DEF10/AUCM,AUEV,CCMS,FASI,FBSI
@@ -92,33 +92,33 @@ CGG      PARAMETER (NNNWP = 30)
       COMMON/fposition/nposition
 
 *     ...To deallocate the memory allocated in genintrk.f
-      POINTER (PCTEVLRK,VALTEIRK(1))
-      POINTER (PCTEILRK, INDTEIRK(1))
-      COMMON/CTEILSRK/PCTEILRK,PCTEVLRK
+!      POINTER (PCTEVLRK,VALTEIRK(1))
+!      POINTER (PCTEILRK, INDTEIRK(1))
+!      COMMON/CTEILSRK/PCTEILRK,PCTEVLRK
 
 *     ...To deallocate memory allocated in iabint and used in setham
-      LOGICAL frstco
-      POINTER (PCOEIL,COEILDUMMY)
-      POINTER (PCOEVL,COEVLDUMMY)
-      COMMON/COEILS/NDCOEA,NCOEI,PCOEIL,PCOEVL,FRSTCO
+!      LOGICAL frstco
+!      POINTER (PCOEIL,COEILDUMMY)
+!      POINTER (PCOEVL,COEVLDUMMY)
+!      COMMON/COEILS/NDCOEA,NCOEI,PCOEIL,PCOEVL,FRSTCO
 
 *     ...To deallocate memory allocated in brint1, brint2,...brint6
-      LOGICAL FIRST
-      POINTER (PINDT1,INDT1DUMMY)
-      POINTER (PINDT2,INDT2DUMMY)
-      POINTER (PINDT3,INDT3DUMMY)
-      POINTER (PINDT4,INDT4DUMMY)
-      POINTER (PINDT5,INDT5DUMMY)
-      POINTER (PINDT6,INDT6DUMMY)
-      POINTER (PVALT1,VALT1DUMMY)
-      POINTER (PVALT2,VALT2DUMMY)
-      POINTER (PVALT3,VALT3DUMMY)
-      POINTER (PVALT4,VALT4DUMMY)
-      POINTER (PVALT5,VALT5DUMMY)
-      POINTER (PVALT6,VALT6DUMMY)
-      COMMON/BILST/PINDT1,PINDT2,PINDT3,PINDT4,PINDT5,PINDT6,
-     :             PVALT1,PVALT2,PVALT3,PVALT4,PVALT5,PVALT6,
-     :             NDTPA(6),NTPI(6),FIRST(6)  !NTPI,FIRST
+!      LOGICAL FIRST
+!      POINTER (PINDT1,INDT1DUMMY)
+!      POINTER (PINDT2,INDT2DUMMY)
+!      POINTER (PINDT3,INDT3DUMMY)
+!      POINTER (PINDT4,INDT4DUMMY)
+!      POINTER (PINDT5,INDT5DUMMY)
+!      POINTER (PINDT6,INDT6DUMMY)
+!      POINTER (PVALT1,VALT1DUMMY)
+!      POINTER (PVALT2,VALT2DUMMY)
+!      POINTER (PVALT3,VALT3DUMMY)
+!      POINTER (PVALT4,VALT4DUMMY)
+!      POINTER (PVALT5,VALT5DUMMY)
+!      POINTER (PVALT6,VALT6DUMMY)
+!      COMMON/BILST/PINDT1,PINDT2,PINDT3,PINDT4,PINDT5,PINDT6,
+!     :             PVALT1,PVALT2,PVALT3,PVALT4,PVALT5,PVALT6,
+!     :             NDTPA(6),NTPI(6),FIRST(6)  !NTPI,FIRST
       
 *     ...To deallocate memory allocated in setham-vpint
       LOGICAL FRSTVP
@@ -354,48 +354,51 @@ c zou       CALL ENGOUT (EAV+elsto,ETOT,IiATJPO,iIASPAR,IVEC,NVEC,MODE)
       CALL dalloc (piccutblk)
       CALL dalloc (pccmin)	! allocated in items as pnccmin
 
-      CALL dalloc (PCTEVLRK)	! allocated in genintrk
-      CALL dalloc (PCTEILRK)	! allocated in genintrk
+!ASIMINA-----------------------------------------------------------------
+!      CALL dalloc (PCTEVLRK)	! allocated in genintrk
+!      CALL dalloc (PCTEILRK)	! allocated in genintrk
 *
 *   Deallocate storage for the integral lists from the
 *   Dirac-Coulomb operator; the storage was allocated
 *   in IABINT and RKINTC
 *
-      IF (NCOEI .GT. 0) THEN
-         CALL DALLOC (PCOEIL)
-         CALL DALLOC (PCOEVL)
-      ENDIF
+!      IF (NCOEI .GT. 0) THEN
+!         CALL DALLOC (PCOEIL)
+!         CALL DALLOC (PCOEVL)
+!      ENDIF
+!------------------------------------------------------------------------
 *
 *   Deallocate storage for the integral lists from the
 *   transverse photon interaction operator; this storage
 *   was allocated in BRINT1, brint2,...brint6
 *
-      IF (LTRANS) THEN
-         IF (NTPI(1) .GT. 0) THEN
-            CALL DALLOC (PINDT1)
-            CALL DALLOC (PVALT1)
-         ENDIF
-         IF (NTPI(2) .GT. 0) THEN
-            CALL DALLOC (PINDT2)
-            CALL DALLOC (PVALT2)
-         ENDIF
-         IF (NTPI(3) .GT. 0) THEN
-            CALL DALLOC (PINDT3)
-            CALL DALLOC (PVALT3)
-         ENDIF
-         IF (NTPI(4) .GT. 0) THEN
-            CALL DALLOC (PINDT4)
-            CALL DALLOC (PVALT4)
-         ENDIF
-         IF (NTPI(5) .GT. 0) THEN
-            CALL DALLOC (PINDT5)
-            CALL DALLOC (PVALT5)
-         ENDIF
-         IF (NTPI(6) .GT. 0) THEN
-            CALL DALLOC (PINDT6)
-            CALL DALLOC (PVALT6)
-         ENDIF
-      ENDIF
+!      IF (LTRANS) THEN
+!         IF (NTPI(1) .GT. 0) THEN
+!            CALL DALLOC (PINDT1)
+!            CALL DALLOC (PVALT1)
+!         ENDIF
+!         IF (NTPI(2) .GT. 0) THEN
+!            CALL DALLOC (PINDT2)
+!            CALL DALLOC (PVALT2)
+!         ENDIF
+!         IF (NTPI(3) .GT. 0) THEN
+!            CALL DALLOC (PINDT3)
+!            CALL DALLOC (PVALT3)
+!         ENDIF
+!         IF (NTPI(4) .GT. 0) THEN
+!            CALL DALLOC (PINDT4)
+!            CALL DALLOC (PVALT4)
+!         ENDIF
+!         IF (NTPI(5) .GT. 0) THEN
+!            CALL DALLOC (PINDT5)
+!            CALL DALLOC (PVALT5)
+!         ENDIF
+!         IF (NTPI(6) .GT. 0) THEN
+!            CALL DALLOC (PINDT6)
+!            CALL DALLOC (PVALT6)
+!         ENDIF
+!      ENDIF
+!------------------------------------------------------------------------
 *
 *   Deallocate storage for the nuclear motional energy integral
 *   lists; this was allocated in KEINT and VINT
@@ -423,8 +426,12 @@ c zou       CALL ENGOUT (EAV+elsto,ETOT,IiATJPO,iIASPAR,IVEC,NVEC,MODE)
          ENDIF
       ENDIF
 
-      CALL dalloc (PNTRPF)	! lodrwf or lodres
-      CALL dalloc (PNTRQF)	! lodrwf or lodres
+! ASIMINA --------------------------------------------------------
+! Move this to the SETHAM subroutine -----------------------------
+      
+!     CALL dalloc (PNTRPF)	! lodrwf or lodres
+!     CALL dalloc (PNTRQF)	! lodrwf or lodres
+!-----------------------------------------------------------------      
 
       RETURN
 

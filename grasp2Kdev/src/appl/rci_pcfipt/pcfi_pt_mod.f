@@ -1,0 +1,11 @@
+      MODULE PCFI_PT_MOD
+      
+      INTEGER       :: NPCFI, L
+      CHARACTER*32  :: PCFINAME(10)
+      INTEGER, DIMENSION(10,10) :: ICCUTBLK2
+      INTEGER, DIMENSION(10) :: NTMP2
+      CHARACTER(128)  :: NAME
+      
+      END MODULE PCFI_PT_MOD
+      
+      

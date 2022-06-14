@@ -27,6 +27,9 @@ CGG      PARAMETER (KEYORB = 121)
 *
 *   Ensure that the indices are in `canonical' order
 *
+!ASIMINA check/print initial value of ncoei
+!      WRITE(*,*) 'NCOEI ', NCOEI
+      
       IF (IA .GT. IB) THEN
          ISWAP = IB
          IB = IA
@@ -38,23 +41,20 @@ CGG      PARAMETER (KEYORB = 121)
       INDEX = IA*KEYORB+IB
 *
       IF (.NOT. FRSTCO) THEN
-*
+
+!ASIMINA check/print initial value of ncoei
+!         WRITE(*,*) 'NCOEI ', NCOEI
+*         
 *   This branch is executed on all entries except the first
 *
          IF (INDEX .GT. INDOEI(NCOEI)) THEN
-*
 *   The index is greater than the largest stored
-*
             FOUND = .FALSE.
             LOC = NCOEI
-*
          ELSEIF (INDEX .LT. INDOEI(1)) THEN
-*
 *   The index is less than the smallest stored
-*
             FOUND = .FALSE.
             LOC = 0
-*
          ELSE
 *
 *   The index is within the range of the indices stored; search
@@ -64,7 +64,6 @@ CGG      PARAMETER (KEYORB = 121)
             JL = 1
 *
     1       IF (JU-JL .GT. 1) THEN
-*
                JM = (JU+JL)/2
                IF (INDOEI(JM) .GT. INDEX) THEN
                   JU = JM
@@ -72,94 +71,75 @@ CGG      PARAMETER (KEYORB = 121)
                   JL = JM
                ENDIF
                GOTO 1
-*
             ELSE
-*
 *   The range is bracketed to the extent possible
-*
                IF (INDEX .EQ. INDOEI(JU)) THEN
-*
                   FOUND = .TRUE.
                   LOC = JU
-*
                ELSEIF (INDEX .EQ. INDOEI(JL)) THEN
-*
                   FOUND = .TRUE.
                   LOC = JL
-*
                ELSE
-*
                   FOUND = .FALSE.
                   LOC = JL
-*
                ENDIF
-*
             ENDIF
-*
          ENDIF
 *
          IF (FOUND) THEN
-*
 *   Found the index in the list; return the value of the integral
 *   from storage
-*
             TEGRAL = VALOEI(LOC)
-*
-         ELSE
+         ENDIF         
+*            
+!         ELSE
 *
 *   Index not found; compute the integral
-*
-            TEGRAL = RINTI (IA,IB,0)
+!            TEGRAL = RINTI (IA,IB,0)
 *
 *   Increment the integral counter
-*
-            NCOEI = NCOEI+1
+!            NCOEI = NCOEI+1
 *
 *   Increase array length by half the present length if the latter
 *   is inadequate to store another pair
+!            IF (NCOEI .GT. NDCOEA) THEN
+!               NEWSIZ = NDCOEA+NDCOEA/2
+!               CALL RALLOC (PCOEIL,NDCOEA,NEWSIZ,4)
+!               CALL RALLOC (PCOEVL,NDCOEA,NEWSIZ,8)
+!               NDCOEA = NEWSIZ
+!            ENDIF
 *
-            IF (NCOEI .GT. NDCOEA) THEN
-               NEWSIZ = NDCOEA+NDCOEA/2
-               CALL RALLOC (PCOEIL,NDCOEA,NEWSIZ,4)
-               CALL RALLOC (PCOEVL,NDCOEA,NEWSIZ,8)
-               NDCOEA = NEWSIZ
-            ENDIF
-*
-            DO 2 I = NCOEI,LOC+2,-1
-               INDOEI(I) = INDOEI(I-1)
-               VALOEI(I) = VALOEI(I-1)
-    2       CONTINUE
+!            DO 2 I = NCOEI,LOC+2,-1
+!               INDOEI(I) = INDOEI(I-1)
+!               VALOEI(I) = VALOEI(I-1)
+!    2       CONTINUE
 *
 *   Put the new index and value into storage
+!            INDOEI(LOC+1) = INDEX
+!            VALOEI(LOC+1) = TEGRAL
 *
-            INDOEI(LOC+1) = INDEX
-            VALOEI(LOC+1) = TEGRAL
-*
-         ENDIF
+!         ENDIF
 *
       ELSE
 *
-*   This branch is executed only once
-*
+*   This branch is executed only once - the FIRST 
          FRSTCO = .FALSE.
 *
 *   Allocate the initial storage for arrays INDOEI and VALOEI;
 *   NDCOEA stores the array dimension
-*
          NDCOEA = 2
          CALL ALLOC (PCOEIL,NDCOEA,4)
          CALL ALLOC (PCOEVL,NDCOEA,8)
 *
 *   Compute the integral's value
-*
-         TEGRAL = RINTI (IA,IB,0)
+!         TEGRAL = RINTI (IA,IB,0)
 *
 *   Initialise the integral counter
-*
          NCOEI = 1
 *
 *   Store the integral and its value
-*
+!         INDEX = INDOEI(1)
+!     TEGRAL = VALOEI(1)
          INDOEI(1) = INDEX
          VALOEI(1) = TEGRAL
 *
